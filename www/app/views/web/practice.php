@@ -18,12 +18,13 @@
 <input type="button" id="problem-prev" onclick="onPrev()" disabled="true" value="<<<Prev">
 <input type="button" id="problem-next" onclick="onNext()" value="Next>>>">
 </form>
+<div id="oemath-question-container"></div>
 <script>
 var grade = {{grade}};
 var category = {{category}};
 var index = 0;
 var count = {{count}};
-var token = "{{ token }}";
+var token = "{{token}}";
 
 </script>
 <script src="js/utility/Utility.js"></script>

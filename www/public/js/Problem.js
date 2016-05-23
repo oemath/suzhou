@@ -7,11 +7,14 @@ var SVG_VERTICAL_CHAR_HEIGHT = 44; // 40 will cause the inputing digit is higher
 var ProblemType;
 (function (ProblemType) {
     ProblemType[ProblemType["Normal"] = 0] = "Normal";
-    ProblemType[ProblemType["SingleChoice"] = 1] = "SingleChoice";
-    ProblemType[ProblemType["MultipleChoice"] = 2] = "MultipleChoice";
-    ProblemType[ProblemType["InlineInput"] = 3] = "InlineInput";
-    ProblemType[ProblemType["Literal"] = 4] = "Literal";
-    ProblemType[ProblemType["Function"] = 5] = "Function";
+    ProblemType[ProblemType["Literal"] = 1] = "Literal";
+    ProblemType[ProblemType["Function"] = 2] = "Function";
+    ProblemType[ProblemType["Radio"] = 3] = "Radio";
+    ProblemType[ProblemType["TrueFalse"] = 4] = "TrueFalse";
+    ProblemType[ProblemType["Checkbox"] = 5] = "Checkbox";
+    ProblemType[ProblemType["Inline"] = 6] = "Inline";
+    ProblemType[ProblemType["InlineLiteral"] = 7] = "InlineLiteral";
+    ProblemType[ProblemType["InlineFunction"] = 8] = "InlineFunction";
 })(ProblemType || (ProblemType = {}));
 var ProblemLevel;
 (function (ProblemLevel) {
@@ -21,6 +24,12 @@ var ProblemLevel;
     ProblemLevel[ProblemLevel["Hard"] = 4] = "Hard";
     ProblemLevel[ProblemLevel["Hardest"] = 5] = "Hardest";
 })(ProblemLevel || (ProblemLevel = {}));
+var Answer;
+(function (Answer) {
+    Answer[Answer["Correct"] = 0] = "Correct";
+    Answer[Answer["Wrong"] = 1] = "Wrong";
+    Answer[Answer["Incomplete"] = 2] = "Incomplete";
+})(Answer || (Answer = {}));
 var SvgCircle = (function () {
     function SvgCircle(x, y, r) {
         this.x = x;
@@ -48,8 +57,8 @@ var Problem = (function () {
         this.parameter = prob.parameter;
         this.knowledge = prob.knowledge;
         this.hint = prob.hint;
-        this.answer = '';
-        this.inputs = 0;
+        this.inputCount = 0;
+        this.html = '';
         this.value_map = {};
     }
     Problem.prototype.splitParameter = function () {
@@ -68,6 +77,17 @@ var Problem = (function () {
         }
         catch (e) {
         }
+    };
+    Problem.prototype.evalLiteral = function (entered, expected) {
+        entered = entered.replace(/\s/g, '').toLowerCase();
+        var candidates = expected.split(';;');
+        for (var candidate in candidates) {
+            candidate = candidate.replace(/\s/g, '').toLowerCase();
+            if (candidate.length > 0 && entered == candidate) {
+                return true;
+            }
+        }
+        return false;
     };
     /////////////////////////////////////////////////
     // Parse parameters - Start
@@ -106,13 +126,13 @@ var Problem = (function () {
             var value = parameter.substr(eql + 1).trim();
             value = this.replaceKnownParameters(value).replace(/[\r\n]/g, '');
             value = this.evalRandom(value);
-            if (!(name_1 == 'ans' && (this.type == ProblemType.Literal || this.type == ProblemType.Function))) {
+            if (!(name_1 == 'ans' && (this.type == ProblemType.Function || this.type == ProblemType.InlineFunction))) {
                 value = this.eval(value).toString();
             }
             this.value_map[("<" + name_1 + ">")] = value;
         }
         if (!this.value_map["<ans>"]) {
-            this.value_map["<ans>"] = (this.type != ProblemType.InlineInput ? '0' : '');
+            this.value_map["<ans>"] = '0';
         }
         return true;
     };
@@ -231,11 +251,11 @@ var Problem = (function () {
                 for (var j = 0; j < w; j++) {
                     var c = s.charAt(j);
                     if ((0 <= c && c <= 9) || c == '+' || c == '-' || c == 'x') {
-                        vertical_inputs += '<input readonly value="' + c + '" type="text" style="left:' + (x - gx / 2) + 'px;top:' + (y - 2) + 'px"/>'; //'<text x='+x+' y='+y+'>'+c+'</text>';
+                        vertical_inputs += '<input mark="${(this.inputCount++)}" readonly value="' + c + '" type="text" style="left:' + (x - gx / 2) + 'px;top:' + (y - 2) + 'px"/>'; //'<text x='+x+' y='+y+'>'+c+'</text>';
                     }
                     else {
                         ++input_numbers;
-                        vertical_inputs += '<input type="text" id="oemath-input-field-' + prob_index + '-' + input_numbers + '" style="left:' + (x - gx / 2) + 'px;top:' + (y - 2) + 'px" hint="' + hints[hint_index++] + '" placeholder="' + c + '"/>';
+                        vertical_inputs += '<input mark="${(this.inputCount++)}" type="text" id="oemath-input-field-' + prob_index + '-' + input_numbers + '" style="left:' + (x - gx / 2) + 'px;top:' + (y - 2) + 'px" hint="' + hints[hint_index++] + '" placeholder="' + c + '"/>';
                     }
                     x += gx;
                 }
@@ -255,180 +275,148 @@ var Problem = (function () {
         });
         return { problem: prob, inputs: inputs };
     };
-    Problem.prototype.replaceOemathTags = function (prob, index) {
-        prob = prob.replace(/<oemath-script>/g, '<script type="text/javascript">');
-        prob = prob.replace(/<\/oemath-script>/g, '<\/script>');
-        ///////////////////////
-        // oemath-svg tags
-        ///////////////////////
-        var circles;
-        var circle_inputs = '';
-        var svg_width = 0;
-        var svg_height = 0;
-        var translateX = SVG_MARGIN;
-        var translateY = SVG_MARGIN;
-        // '<oemath-svg((w|width)=100,h|height=200)>'
-        prob = prob.replace(/<\s*oemath-svg\(([^\)]+)\)\s*>/g, function (m, $1) {
-            var prop = this.parsePropString($1, function (k, v) {
-                if (k == 'width' || k == 'w') {
-                    svg_width = this.eval(v);
-                }
-                else if (k == 'height' || k == 'h') {
-                    svg_height = this.eval(v);
-                }
-                else if (k == 'tx' || k == 'translateX') {
-                    translateX = this.eval(v);
-                }
-                else if (k == 'ty' || k == 'translateY') {
-                    translateY = this.eval(v);
-                }
-                return false;
-            });
-            return '<svg width=' + (svg_width + 2 * translateX) + ' height=' + (svg_height + 2 * translateY) + ' class="oemath-svg-svg">' +
-                '<g transform="translate(' + translateX + ',' + translateY + ')">';
+    Problem.prototype.replaceOemathTags = function (question, index) {
+        //<canvas#(<w>,<h>)></canvas>
+        question = question.replace(/<\s*canvas(\d*)\s*\(\s*(\d+)\s*,\s*(\d+)\)\s*>(.*?)<\s*\/canvas\s*>/g, function (m, $1, $2, $3, $4) {
+            return "<div id='oemath-canvas-div" + $1 + "' style='position:relative;width:" + $2 + "px;height:" + $3 + "px'><canvas id='oemath-canvas" + $1 + "' width='" + $2 + "' height='" + $3 + "'>" + $4 + "<\/canvas><\/div>";
         });
-        // 'def_circle C#=(200,200,100)' +: define a circle named C#, cx=200, cy=200, radius=100
-        prob = prob.replace(/def_circle\s+([^=\s]+)\s*=\s*\(\s*([^,\s\)]+)\s*,\s*([^,\s\)]+)\s*,\s*([^,\s\)]+)\s*\)/g, function (m, $1, $2, $3, $4) {
-            circles[$1] = new SvgCircle(this.eval($2), this.eval($3), this.eval($4));
-            return "";
+        //<script-canvas#>
+        question = question.replace(/<\s*script-canvas(\d*)\s*>/, function (m, $1) {
+            return "<script>var ctx = document.getElementById('oemath-canvas" + $1 + "').getContext('2d');";
         });
-        // <svg-polygon[(nofill)] (x,y)|C#0(theta)[ (x,y)|C#0(theta)]+/>
-        prob = prob.replace(/<\s*svg-polygon\(?([^\)\s]+)?\)?\s+([^>]+)>/g, function (m, $1, $2) {
-            var pts = $2.trim().split(' ');
-            var ret = '<polygon points="';
-            for (var i = 0; i < pts.length; i++) {
-                var xy = this.parsePosition(circles, pts[i].trim());
-                ret += (xy.x + ',' + xy.y + ' ');
+        //<input[#](expected[,placeholder,width,x,y])>
+        /* define css style for class: oemath-input-inline
+        .oemath - input - inline
+        {
+            border: 1px solid;
+            padding: 0px;
+            text - align: center;
+            font - size:24px;
+            background - color:rgba(0, 0, 0, 0);
+        }*/
+        question = question.replace(/\s*<\s*input(\d*?)\s*\(\s*([^,]+)\s*,?\s*([^,]?)\s*,?\s*(\d*)\s*,?\s*(\d*)\s*,?\s*(\d*)\s*\)\s*>/g, function (m, id, expected, placeholder, w, x, y) {
+            var rtn = "<input mark=\"" + (this.inputCount++) + "\" class='oemath-input-inline' id='oemathid-input-" + (id == '' ? '0' : id) + "'";
+            if (placeholder != '')
+                rtn += " placeholder='" + placeholder + "'";
+            if (w != '' || x != '' || y != '') {
+                rtn += " style='";
+                if (w != '') {
+                    rtn += "width:" + w + "px;";
+                }
+                if (x != '' || y != '') {
+                    rtn += 'position:absolute;';
+                }
+                if (x != '') {
+                    rtn += "left:" + x + "px;";
+                }
+                if (y != '') {
+                    rtn += "top:" + y + "px;";
+                }
+                rtn += "'";
             }
-            ret += "\" class=\"oemath-svg\" " + this.parsePropertyString($1) + "/>";
-            return ret;
+            if (expected != '')
+                rtn += " expected='" + expected + "'";
+            rtn += "/>";
+            return rtn;
         });
-        // <svg-line(props) (x,y)|C#0(theta) (x,y)|C#0(theta)/>
-        prob = prob.replace(/<\s*svg-line\(?([^\)\s]+)?\)?\s+(\S+)\s+([^>]+)>/g, function (m, $1, $2, $3) {
-            var p1 = this.parsePosition(circles, $2);
-            var p2 = this.parsePosition(circles, $3.trim());
-            return "<line x1=" + p1.x + " y1=" + p1.y + " x2=" + p2.x + " y2=" + p2.y + " class=\"oemath-svg\" " + this.parsePropertyString($1) + "/>";
-        });
-        // <svg-rect(props) (x,y)|C#0(theta) (x,y)|C#0(theta)/>
-        prob = prob.replace(/<\s*svg-rect\(?([^\)\s]+)?\)?\s+(\S+)\s+([^>]+)>/g, function (m, $1, $2, $3) {
-            var p1 = this.parsePosition(circles, $2);
-            var p2 = this.parsePosition(circles, $3.trim());
-            return "<rect x=" + p1.x + " y=" + p1.y + " width=" + (p2.x - p1.x) + " height=" + (p2.y - p1.y) + " class=\"oemath-svg\" " + this.parsePropertyString($1) + "/>";
-        });
-        // <svg-circle[(props)] (x,y,r)>
-        prob = prob.replace(/<\s*svg-circle\(?([^\)\s]+)?\)?\s+\(([^,]+),([^,]+),([^,]+)\)>/g, function (m, $1, $2, $3, $4) {
-            var prop = this.parsePropertyString($1, function (k, v) {
-                if (k == 'hint') {
-                    //                    circle_inputs += '<svg-input(hint=' + v + ') ' + $2 + '>';
-                    circle_inputs += "<svg-input(hint=" + v + ") " + $2 + ">";
-                    return false;
-                }
-                return true; // continue processing
-            });
-            return "<circle cx=" + $2 + " cy=" + $3 + " r=" + $4 + prop + "/>";
-        });
-        // <svg-circle[(props)] C#(theta) r=<radius>> or
-        // <svg-circle[(props)] C#>
-        prob = prob.replace(/<\s*svg-circle\(?([^\)\s]+)?\)?\s+([^\s>]+)([^>]*)>/g, function (m, $1, $2, $3) {
-            var prop = this.parsePropertyString($1, function (k, v) {
-                if (k == 'hint') {
-                    //                    circle_inputs += '<svg-input(hint=' + v + ') ' + $2 + '>';
-                    circle_inputs += "<svg-input(hint=" + v + ") " + $2 + ">";
-                    return false;
-                }
-                return true; // continue processing
-            });
-            if ($2.indexOf('(') >= 0) {
-                var xy = this.parsePosition(circles, $2);
-                var radius = this.getPropertyNumber($3, 'r', DEFAULT_INPUT_RADIUS);
-                //                return '<circle cx=' + xy.x + ' cy=' + xy.y + ' r=' + radius + prop + '/>';
-                return "<circle cx=" + xy.x + " cy=" + xy.y + " r=" + radius + " " + prop + "/>";
-            }
-            else {
-                var cr = circles[$2.trim()];
-                //                return '<circle cx=' + cr.x + ' cy=' + cr.y + ' r=' + cr.r + prop + '/>';
-                return "<circle cx=" + cr.x + " cy=" + cr.y + " r=" + cr.r + " " + prop + "/>";
-            }
-        });
-        // inject circle inputs
-        var has_foreign = false;
-        prob = prob.replace(/(<\s*oemath-foreignObject\s*>)/g, function (m, $1) {
-            has_foreign = true;
-            return $1 + circle_inputs;
-        });
-        if (!has_foreign) {
-            prob = prob.replace(/(<\s*\/\s*oemath-svg\s*>)/g, function (m, $1) {
-                //                return '<oemath-foreignObject>' + circle_inputs + '</oemath-foreignObject>' + $1;
-                return "<oemath-foreignObject>" + circle_inputs + "</oemath-foreignObject>" + $1;
+        return question;
+    };
+    Problem.prototype.processAnswerType = function () {
+        var answer = this.value_map['<ans>'];
+        var answer_html = '<form class="oemathclass-question-form" id="oemathid-question-form">';
+        if (this.type == ProblemType.TrueFalse) {
+            var value = this.eval(answer) ? 1 : 0;
+            [value, 1 - value].forEach(function (expected, idx, array) {
+                answer_html += ("<div expected='" + expected + "'><input type='radio' mark='" + (this.inputCount++) + "' name='oemath-question-radio' id='oemath-choice-" + idx + "' class='oemathclass-question-choice' expected='" + expected + "'>") +
+                    ("<label for='oemath-choice-" + idx + "' class='oemathclass-question-choice-label'>" + ['True', 'False'][idx] + "</label></div >");
             });
         }
-        // oemath-image-input tags
-        var input_numbers = -1;
-        // <inline-input(props) [width=<width>]/>
-        prob = prob.replace(/\<inline-input\(([^\)]+)\)([^>]*)>/g, function (m, $1, $2) {
-            ++input_numbers;
-            var width = this.getPropertyNumber($2, 'width', DEFAULT_INLINE_INPUT_WIDTH);
-            //            return '<input type="text" id="oemath-input-field-' + prob_index + '-' + input_numbers + '" class="oemath-inline-input" style="width:' + width + 'px" placeholder="?"' + parse_prop_str($1) + '>';
-            return "<input type=\"text\" id=\"oemath-input-field-" + index + "-" + input_numbers + "\" class=\"oemath-inline-input\" style=\"width:" + width + "px\" placeholder=\"?\"" + this.parsePropertyString($1) + ">";
-        });
-        // <svg-input(props) [(x,y)|C#0(theta)] [width=<width>]/>
-        // <svg-input(0) (10,10) width=100/>
-        // <svg-input(0) (10,10)/>
-        // <svg-input(0) C#0(10) width=100/>
-        prob = prob.replace(/<\s*svg-input\(([^\)]+)\)\s+([^\s>]+)([^>]*)>/g, function (m, $1, $2, $3) {
-            ++input_numbers;
-            var width = this.getPropertyNumber($3, 'width', DEFAULT_INPUT_RADIUS * 2);
-            var xyp = this.parsePosition(circles, $2);
-            if (xyp.polar) {
-                xyp.x -= width / 2;
-                xyp.y -= DEFAULT_INPUT_RADIUS;
+        else if (this.type == ProblemType.Radio) {
+            var options = answer.split(';;');
+            var index_1 = new Array(options.length);
+            for (var i = 0; i < options.length; i++)
+                index_1[i] = i;
+            shuffle(index_1);
+            for (var idx = 0; idx < index_1.length; idx++) {
+                var i_1 = index_1[idx];
+                var expected = i_1 == 0 ? 1 : 0;
+                answer_html += ("<div expected='" + expected + "'><input type='radio' mark='" + (this.inputCount++) + "' name='oemath-question-radio' id='oemath-choice-" + i_1 + "' class='oemathclass-question-choice' expected='" + expected + "'>") +
+                    ("<label for='oemath-choice-" + i_1 + "' class='oemathclass-question-choice-label'>" + options[i_1].trim() + "</label></div >");
             }
-            /*            return '<input type="text" id="oemath-input-field-' + prob_index + '-' + input_numbers + '"' +
-                            parse_prop_str($1) +
-                            ' style="left:' + xyp.x + 'px; top:' + xyp.y + 'px; width:' + width + 'px"' +
-                            ' class="oemath-svg-input" placeholder="?"/>';*/
-            return ("<input type=\"text\" id=\"oemath-input-field-" + index + "-" + input_numbers + "\"" + this.parsePropertyString($1) + " ") +
-                ("style=\"left:" + xyp.x + "px; top:" + xyp.y + "px; width:" + width + "px\" class=\"oemath-svg-input\" placeholder=\"?\"/>");
-        });
-        // see <svg-input>
-        prob = prob.replace(/<\s*svg-text\(([^\)]+)\)\s+([^\s>]+)([^>]*)>/g, function (m, $1, $2, $3) {
-            var width = this.getPropertyNumber($3, 'width', DEFAULT_INPUT_RADIUS * 2);
-            var xyp = this.parsePosition(circles, $2);
-            if (xyp.p) {
-                xyp.x -= width / 2;
-                xyp.y -= DEFAULT_INPUT_RADIUS;
+        }
+        else if (this.type == ProblemType.Checkbox) {
+            var options = answer.split(';;');
+            var corrects = parseInt(options[0]);
+            var index_2 = new Array(options.length - 1);
+            for (var i = 1; i < options.length; i++)
+                index_2[i - 1] = i - 1;
+            shuffle(index_2);
+            for (var idx = 0; idx < index_2.length; idx++) {
+                var i_2 = index_2[idx];
+                var expected = i_2 < corrects ? 1 : 0;
+                answer_html += ("<div expected='" + expected + "'><input type='checkbox' mark='" + (this.inputCount++) + "' name='oemath-question-checkbox' id='oemath-choice-" + i_2 + "' class='oemathclass-question-choice' expected='" + expected + "'>") +
+                    ("<label for='oemath-choice-" + i_2 + "' class='oemathclass-question-choice-label'>" + options[i_2 + 1].trim() + "</label></div >");
             }
-            var prop = this.parseProperty($1);
-            /*            return '<div style="position:absolute;left:' + (xyp.x - width / 2) + 'px;top:' + (xyp.y - DEFAULT_INPUT_RADIUS) + 'px"><input type="text" readonly value="' +
-                            prop["value"] +
-                            '" style="left:0;top:0;width:' + width + 'px;height:' + (DEFAULT_INPUT_RADIUS * 2) + 'px"' +
-                            '/></div>';*/
-            return ("<div style=\"position:absolute;left:" + (xyp.x - width / 2) + "px;top:" + (xyp.y - DEFAULT_INPUT_RADIUS) + "px\"><input type=\"text\" readonly value=\"" + prop["value"] + "\" ") +
-                ("style=\"left:0;top:0;width:" + width + "px;height:" + DEFAULT_INPUT_RADIUS * 2 + "px\"/>") +
-                '</div>';
-        });
-        prob = prob.replace(/<\s*oemath-foreignObject\s*>/g, '<foreignObject x=0 y=0 width=' + svg_width + ' height=' + svg_height + '>');
-        prob = prob.replace(/<\s*\/\s*oemath-foreignObject\s*>/g, '<\/foreignObject>');
-        prob = prob.replace(/<\s*\/\s*oemath-svg\s*>/g, '</g><\/svg>');
-        var desc_inputs = this.replaceVertical(prob, index, input_numbers);
-        //        return { question: desc_inputs.problem, inputs: desc_inputs.inputs + 1 };
-        return [desc_inputs.problem, desc_inputs.inputs + 1];
+        }
+        answer_html += "<\/form>";
+        this.value_map['<ans>'] = answer_html;
+    };
+    Problem.prototype.checkAnswer = function () {
+        var correct = true;
+        switch (this.type) {
+            case ProblemType.TrueFalse:
+            case ProblemType.Radio:
+            case ProblemType.Checkbox:
+                var entered = false;
+                $('.oemathclass-question-choice').each(function (index) {
+                    var expected = $(this).attr('expected');
+                    var checked = $(this).is(':checked');
+                    if (checked)
+                        entered = true;
+                    if ((expected == '1' && !checked) || (expected == '0' && checked)) {
+                        correct = false;
+                    }
+                });
+                if (!entered)
+                    return Answer.Incomplete;
+                break;
+            case ProblemType.Normal:
+                var answer_entered = $("#oemathid-answer-input").val().trim();
+                if (answer_entered.length == 0) {
+                    return Answer.Incomplete;
+                }
+                correct = this.eval("(" + answer_entered + ")==(" + this.value_map['<ans>'] + ")") ? true : false;
+                break;
+            case ProblemType.Literal:
+            case ProblemType.Function:
+            case ProblemType.Inline:
+            case ProblemType.InlineLiteral:
+            case ProblemType.InlineFunction:
+        }
+        return correct ? Answer.Correct : Answer.Wrong;
+    };
+    Problem.prototype.generateHtml = function () {
+        var html = "<div id=\"oemathid-problem-html\"><hr/><h1 class=\"oemathclass-practice-title\">Question</h1><div class=\"oemathclass-practice-question\"><h3 id=\"oemathid-practice-question\" class=\"oemathclass-practice-problem\">" + this.question + "</h3></div><hr/><div class=\"form-inline\">";
+        if (this.type == ProblemType.Normal || this.type == ProblemType.Literal || this.type == ProblemType.Function) {
+            html +=
+                "<h1 class=\"oemathclass-answer-title\">Answer</h1><div class=\"form-inline\"><input mark=\"" + (this.inputCount++) + "\" id=\"oemathid-answer-input-0\" type=\"text\" class=\"form-control oemathclass-answer-input\">";
+        }
+        html += "<button id=\"oemathid-answer-submit\" class=\"oemathclass-answer-submit\" onclick=\"onclickSubmitPractice()\">Submit</button></div></div>";
+        return html;
     };
     Problem.prototype.process = function (index) {
         this.parseParameterMap();
+        this.parameter = this.replaceKnownParameters(this.parameter);
+        this.parameter = this.replaceOemathTags(this.parameter, index);
+        this.processAnswerType();
         this.question = this.replaceKnownParameters(this.question);
-        _a = this.replaceOemathTags(this.question, index), this.question = _a[0], this.inputs = _a[1];
-        this.answer = this.replaceKnownParameters('<ans>');
+        this.question = this.replaceOemathTags(this.question, index);
+        this.html = this.generateHtml();
+        this.entered = new Array(this.inputCount);
         return true;
-        var _a;
     };
     return Problem;
 })();
-/*function rx(question: string, parameter: string): string {
-    let problem = new Problem(ProblemType.Normal, ProblemLevel.Normal, question, parameter);
-
-    problem.process(2);
-
-    return problem.question;
-}*/
-//# sourceMappingURL=Problem.js.map
+function onclickSubmitPractice() {
+}
+//# sourceMappingURL=problem.js.map

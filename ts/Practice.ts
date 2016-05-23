@@ -18,9 +18,11 @@ function processProblem(problem: Problem) {
 
     problem.process(1);
     $('#problem-question-parsed').text(problem.question);
+    $('#oemath-question-container').empty();
+    $('#oemath-question-container').append(problem.html);
 }
 
-function ajaxProblem(grade, category, index) {
+/*function ajaxProblem(grade, category, index) {
     $.ajax({
         type: "get",
         url: "/api/problem",
@@ -57,3 +59,60 @@ function onNext() {
 }
 
 ajaxProblem(grade, category, index);
+*/
+class Practice {
+    public grade: number;
+    public category: number;
+    public count: number;
+    public token: string;
+
+    public problems: Problem[];
+    public current: number;
+
+    public constructor(grade: number, category: number, count: number, token: string) {
+        this.grade = grade;
+        this.category = category;
+        this.count = count;
+        this.token = token;
+
+        this.problems = [];
+        this.current = -1;
+    }
+
+
+    public ajaxProblem(): Problem {
+        if (this.current >= this.count - 1) return null;
+        let problem: Problem = null;
+
+        $.ajax({
+            type: "get",
+            url: "/api/problem",
+            data: { grade: this.grade, category: this.category, index: this.current + 1, token: this.token },
+            dataType: "json",
+            async: false,
+            success: function (data, textStatus, jqXHR) {
+                if (data.status == 'OK') {
+                    problem = new Problem(data.result)
+                }
+                else {
+                }
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+            },
+        });
+
+        if (problem) {
+            ++this.current;
+            practice.problems.push(problem);
+        }
+
+        return problem;
+    }
+
+}
+
+var practice: Practice = new Practice(grade, category, count, token);
+
+let problem: Problem = practice.ajaxProblem();
+
+processProblem(problem);

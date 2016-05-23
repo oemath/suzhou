@@ -41,6 +41,6 @@ $app->get('/practice', function() use ($app) {
             'category' => $category,
             'title' => $title,
             'token' =>  $session_token,
-            'count' => $PROBLEMS_COUNT
+            'count' => $PROBLEMS_COUNT,
     ]);
 })->name('practice');
