@@ -55,5 +55,5 @@ $app->get('/api/problem', function() use ($app) {
 
     $problem = Problem::select($grade, $category, $pid);
     
-    echo ok($problem);
+    echo $problem ? ok($problem) : fail('Select nothing: '.$pid);
 });

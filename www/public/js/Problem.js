@@ -1,7 +1,4 @@
 /// <reference path="../Scripts/typings/jquery/jquery.d.ts" />
-var DEFAULT_INPUT_RADIUS = 25;
-var DEFAULT_INLINE_INPUT_WIDTH = 30;
-var SVG_MARGIN = 2;
 var SVG_VERTICAL_CHAR_WIDTH = 32;
 var SVG_VERTICAL_CHAR_HEIGHT = 44; // 40 will cause the inputing digit is higher
 var ProblemType;
@@ -50,7 +47,8 @@ var Point = (function () {
     return Point;
 })();
 var Problem = (function () {
-    function Problem(prob) {
+    function Problem(prob, index) {
+        this.index = index;
         this.type = prob.type;
         this.level = prob.level;
         this.question = prob.question;
@@ -58,8 +56,9 @@ var Problem = (function () {
         this.knowledge = prob.knowledge;
         this.hint = prob.hint;
         this.inputCount = 0;
-        this.html = '';
         this.value_map = {};
+        this.status = Answer.Incomplete;
+        this.reportStatus = Answer.Incomplete;
     }
     Problem.prototype.splitParameter = function () {
         return this.parameter.trim().split('$$');
@@ -126,8 +125,12 @@ var Problem = (function () {
             var value = parameter.substr(eql + 1).trim();
             value = this.replaceKnownParameters(value).replace(/[\r\n]/g, '');
             value = this.evalRandom(value);
-            if (!(name_1 == 'ans' && (this.type == ProblemType.Function || this.type == ProblemType.InlineFunction))) {
-                value = this.eval(value).toString();
+            if (!(name_1 == 'ans' && (this.type == ProblemType.Function ||
+                this.type == ProblemType.InlineFunction ||
+                this.type == ProblemType.TrueFalse ||
+                this.type == ProblemType.Radio ||
+                this.type == ProblemType.Checkbox))) {
+                value = "" + this.eval(value);
             }
             this.value_map[("<" + name_1 + ">")] = value;
         }
@@ -251,11 +254,11 @@ var Problem = (function () {
                 for (var j = 0; j < w; j++) {
                     var c = s.charAt(j);
                     if ((0 <= c && c <= 9) || c == '+' || c == '-' || c == 'x') {
-                        vertical_inputs += '<input mark="${(this.inputCount++)}" readonly value="' + c + '" type="text" style="left:' + (x - gx / 2) + 'px;top:' + (y - 2) + 'px"/>'; //'<text x='+x+' y='+y+'>'+c+'</text>';
+                        vertical_inputs += "<input index=\"" + (this.inputCount++) + "\" readonly value=\"" + c + "\" type=\"text\" style=\"left:" + (x - gx / 2) + "px;top:" + (y - 2) + "px\" oninput=\"onInputChange(this)\"/>"; //'<text x='+x+' y='+y+'>'+c+'</text>';
                     }
                     else {
                         ++input_numbers;
-                        vertical_inputs += '<input mark="${(this.inputCount++)}" type="text" id="oemath-input-field-' + prob_index + '-' + input_numbers + '" style="left:' + (x - gx / 2) + 'px;top:' + (y - 2) + 'px" hint="' + hints[hint_index++] + '" placeholder="' + c + '"/>';
+                        vertical_inputs += "<input index=\"" + (this.inputCount++) + "\" type=\"text\" id=\"oemath-input-field-" + prob_index + "-" + input_numbers + "\" style=\"left:" + (x - gx / 2) + "px;top:" + (y - 2) + "px\" hint=\"" + hints[hint_index++] + "\" placeholder=\"" + c + "\"/>";
                     }
                     x += gx;
                 }
@@ -268,11 +271,13 @@ var Problem = (function () {
     };
     Problem.prototype.replaceVertical = function (prob, prob_index, input_numbers) {
         var inputs = input_numbers;
-        prob = prob.replace(/\s*<\s*oemath-vertical\s+\(([^\)]+)\)\s+\(([^\)]+)\)\s*>/g, function (m, $1, $2) {
-            var desc_inputs = this.vertical(this.eval($1), this.eval($2), prob_index, input_numbers);
-            inputs = desc_inputs.inputs;
-            return desc_inputs.problem;
-        });
+        prob = prob.replace(/\s*<\s*oemath-vertical\s+\(([^\)]+)\)\s+\(([^\)]+)\)\s*>/g, (function (thisObj) {
+            return function (m, $1, $2) {
+                var desc_inputs = thisObj.vertical(thisObj.eval($1), thisObj.eval($2), prob_index, input_numbers);
+                inputs = desc_inputs.inputs;
+                return desc_inputs.problem;
+            };
+        })(this));
         return { problem: prob, inputs: inputs };
     };
     Problem.prototype.replaceOemathTags = function (question, index) {
@@ -285,7 +290,7 @@ var Problem = (function () {
             return "<script>var ctx = document.getElementById('oemath-canvas" + $1 + "').getContext('2d');";
         });
         //<input[#](expected[,placeholder,width,x,y])>
-        /* define css style for class: oemath-input-inline
+        /* define css style for class: oemathclass-inline-input
         .oemath - input - inline
         {
             border: 1px solid;
@@ -294,40 +299,45 @@ var Problem = (function () {
             font - size:24px;
             background - color:rgba(0, 0, 0, 0);
         }*/
-        question = question.replace(/\s*<\s*input(\d*?)\s*\(\s*([^,]+)\s*,?\s*([^,]?)\s*,?\s*(\d*)\s*,?\s*(\d*)\s*,?\s*(\d*)\s*\)\s*>/g, function (m, id, expected, placeholder, w, x, y) {
-            var rtn = "<input mark=\"" + (this.inputCount++) + "\" class='oemath-input-inline' id='oemathid-input-" + (id == '' ? '0' : id) + "'";
-            if (placeholder != '')
-                rtn += " placeholder='" + placeholder + "'";
-            if (w != '' || x != '' || y != '') {
-                rtn += " style='";
-                if (w != '') {
-                    rtn += "width:" + w + "px;";
+        // Introduce another scope to capture "this"
+        question = question.replace(/\s*<\s*input(\d*?)\s*\(\s*([^,]+)\s*,?\s*([^,]?)\s*,?\s*(\d*)\s*,?\s*(\d*)\s*,?\s*(\d*)\s*\)\s*>/g, (function (thisObj) {
+            return function (m, id, expected, placeholder, w, x, y) {
+                var rtn = "<input index=\"" + (thisObj.inputCount++) + "\" type=\"text\" class='oemathclass-inline-input oemathclass-input' id='oemathid-input-" + (id == '' ? '0' : id) + "' oninput=\"onInputChange(this)\"";
+                if (placeholder != '')
+                    rtn += " placeholder='" + placeholder + "'";
+                if (w != '' || x != '' || y != '') {
+                    rtn += " style='";
+                    if (w != '') {
+                        rtn += "width:" + w + "px;";
+                    }
+                    if (x != '' || y != '') {
+                        rtn += 'position:absolute;';
+                    }
+                    if (x != '') {
+                        rtn += "left:" + x + "px;";
+                    }
+                    if (y != '') {
+                        rtn += "top:" + y + "px;";
+                    }
+                    rtn += "'";
                 }
-                if (x != '' || y != '') {
-                    rtn += 'position:absolute;';
-                }
-                if (x != '') {
-                    rtn += "left:" + x + "px;";
-                }
-                if (y != '') {
-                    rtn += "top:" + y + "px;";
-                }
-                rtn += "'";
-            }
-            if (expected != '')
-                rtn += " expected='" + expected + "'";
-            rtn += "/>";
-            return rtn;
-        });
+                if (expected != '')
+                    rtn += " expected='" + expected + "'";
+                rtn += "/>";
+                return rtn;
+            };
+        })(this));
         return question;
     };
     Problem.prototype.processAnswerType = function () {
+        if (this.type != ProblemType.TrueFalse && this.type != ProblemType.Radio && this.type != ProblemType.Checkbox)
+            return;
         var answer = this.value_map['<ans>'];
-        var answer_html = '<form class="oemathclass-question-form" id="oemathid-question-form">';
+        var answer_html = "<form class=\"oemathclass-question-form oemathclass-input\" id=\"oemathid-question-form\" index=\"" + (this.inputCount++) + "\" onchange=\"onInputChange(this)\">";
         if (this.type == ProblemType.TrueFalse) {
             var value = this.eval(answer) ? 1 : 0;
             [value, 1 - value].forEach(function (expected, idx, array) {
-                answer_html += ("<div expected='" + expected + "'><input type='radio' mark='" + (this.inputCount++) + "' name='oemath-question-radio' id='oemath-choice-" + idx + "' class='oemathclass-question-choice' expected='" + expected + "'>") +
+                answer_html += ("<div expected='" + expected + "'><input type='radio' choiceindex='" + idx + "' name='oemath-question-radio' id='oemath-choice-" + idx + "' class='oemathclass-question-choice' expected='" + expected + "'>") +
                     ("<label for='oemath-choice-" + idx + "' class='oemathclass-question-choice-label'>" + ['True', 'False'][idx] + "</label></div >");
             });
         }
@@ -340,7 +350,7 @@ var Problem = (function () {
             for (var idx = 0; idx < index_1.length; idx++) {
                 var i_1 = index_1[idx];
                 var expected = i_1 == 0 ? 1 : 0;
-                answer_html += ("<div expected='" + expected + "'><input type='radio' mark='" + (this.inputCount++) + "' name='oemath-question-radio' id='oemath-choice-" + i_1 + "' class='oemathclass-question-choice' expected='" + expected + "'>") +
+                answer_html += ("<div expected='" + expected + "'><input type='radio' choiceindex='" + idx + "' name='oemath-question-radio' id='oemath-choice-" + i_1 + "' class='oemathclass-question-choice' expected='" + expected + "'>") +
                     ("<label for='oemath-choice-" + i_1 + "' class='oemathclass-question-choice-label'>" + options[i_1].trim() + "</label></div >");
             }
         }
@@ -354,7 +364,7 @@ var Problem = (function () {
             for (var idx = 0; idx < index_2.length; idx++) {
                 var i_2 = index_2[idx];
                 var expected = i_2 < corrects ? 1 : 0;
-                answer_html += ("<div expected='" + expected + "'><input type='checkbox' mark='" + (this.inputCount++) + "' name='oemath-question-checkbox' id='oemath-choice-" + i_2 + "' class='oemathclass-question-choice' expected='" + expected + "'>") +
+                answer_html += ("<div expected='" + expected + "'><input type='checkbox' choiceindex='" + idx + "' name='oemath-question-checkbox' id='oemath-choice-" + i_2 + "' class='oemathclass-question-choice' expected='" + expected + "'>") +
                     ("<label for='oemath-choice-" + i_2 + "' class='oemathclass-question-choice-label'>" + options[i_2 + 1].trim() + "</label></div >");
             }
         }
@@ -363,6 +373,8 @@ var Problem = (function () {
     };
     Problem.prototype.checkAnswer = function () {
         var correct = true;
+        var answer_entered;
+        var answer_expected;
         switch (this.type) {
             case ProblemType.TrueFalse:
             case ProblemType.Radio:
@@ -381,42 +393,160 @@ var Problem = (function () {
                     return Answer.Incomplete;
                 break;
             case ProblemType.Normal:
-                var answer_entered = $("#oemathid-answer-input").val().trim();
+                answer_entered = $("#oemathid-answer-input-0").val().trim();
                 if (answer_entered.length == 0) {
                     return Answer.Incomplete;
                 }
                 correct = this.eval("(" + answer_entered + ")==(" + this.value_map['<ans>'] + ")") ? true : false;
                 break;
             case ProblemType.Literal:
+                break;
             case ProblemType.Function:
             case ProblemType.Inline:
+                var inputElems = $('#oemathid-practice-question .oemathclass-inline-input');
+                for (var i = 0; i < inputElems.length; i++) {
+                    var inputElem = inputElems[i];
+                    answer_entered = inputElem.value.trim();
+                    if (answer_entered.length == 0) {
+                        return Answer.Incomplete;
+                    }
+                }
+                for (var i = 0; i < inputElems.length; i++) {
+                    var inputElem = inputElems[i];
+                    answer_entered = inputElem.value;
+                    answer_expected = inputElem.getAttribute("expected");
+                    if (!this.eval("(" + answer_entered + ")==(" + answer_expected + ")")) {
+                        correct = false;
+                        break;
+                    }
+                }
+                break;
             case ProblemType.InlineLiteral:
             case ProblemType.InlineFunction:
         }
-        return correct ? Answer.Correct : Answer.Wrong;
-    };
-    Problem.prototype.generateHtml = function () {
-        var html = "<div id=\"oemathid-problem-html\"><hr/><h1 class=\"oemathclass-practice-title\">Question</h1><div class=\"oemathclass-practice-question\"><h3 id=\"oemathid-practice-question\" class=\"oemathclass-practice-problem\">" + this.question + "</h3></div><hr/><div class=\"form-inline\">";
-        if (this.type == ProblemType.Normal || this.type == ProblemType.Literal || this.type == ProblemType.Function) {
-            html +=
-                "<h1 class=\"oemathclass-answer-title\">Answer</h1><div class=\"form-inline\"><input mark=\"" + (this.inputCount++) + "\" id=\"oemathid-answer-input-0\" type=\"text\" class=\"form-control oemathclass-answer-input\">";
+        this.status = correct ? Answer.Correct : Answer.Wrong;
+        if (this.reportStatus != Answer.Wrong) {
+            this.reportStatus = this.status;
         }
-        html += "<button id=\"oemathid-answer-submit\" class=\"oemathclass-answer-submit\" onclick=\"onclickSubmitPractice()\">Submit</button></div></div>";
-        return html;
+        if (!correct) {
+            this.entered_wrong = this.entered.slice(0);
+        }
+        return this.status;
     };
-    Problem.prototype.process = function (index) {
+    Problem.prototype.generateHtmls = function () {
+        this.htmlBase =
+            "<div id=\"oemathid-question-html\"><hr/><h1 class=\"oemathclass-practice-title\">Question</h1><div class=\"oemathclass-practice-question\"><h3 id=\"oemathid-practice-question\" class=\"oemathclass-practice-question\">" + this.question + "</h3></div><hr/><div class=\"form-inline\">";
+        if (this.type == ProblemType.Normal || this.type == ProblemType.Literal || this.type == ProblemType.Function) {
+            var answerHint = this.value_map['<ans_hint>'];
+            if (!answerHint)
+                answerHint = this.value_map['<ans>'];
+            this.htmlBase +=
+                "<h1 class=\"oemathclass-answer-title\">Answer</h1><div class=\"form-inline\"><input index=\"" + (this.inputCount++) + "\" id=\"oemathid-answer-input-0\" type=\"text\" class=\"form-control oemathclass-answer-input oemathclass-input\" expected='" + answerHint + "' oninput=\"onInputChange(this)\">";
+        }
+        this.htmlSubmit = "<button id=\"oemathid-practice-submit\" class=\"oemathclass-practice-button\" onclick=\"onclickSubmit()\">Submit</button>";
+        this.htmlShowAnswer = "<button id=\"oemathid-practice-show-answer\" class=\"oemathclass-practice-button\" onclick=\"onclickShowAnswer()\">Show Correct Answer</button>";
+        this.htmlSkip = "<button id=\"oemathid-practice-skip\" class=\"oemathclass-practice-button\" onclick=\"onclickSkip()\">Skip</button>";
+        this.htmlStartReview = "<button id=\"oemathid-practice-start-review\" class=\"oemathclass-practice-button\" onclick=\"onclickStartReview()\">Start Review</button>";
+        this.htmlFinishReview = "<button id=\"oemathid-practice-finish-review\" class=\"oemathclass-practice-button\" onclick=\"onclickFinishReview()\">Finish Review</button>";
+        this.htmlClosing = "</div>";
+    };
+    Problem.prototype.fillEntered = function (entered) {
+        $('.oemathclass-input').each((function (entered) {
+            return function (index) {
+                var i = parseInt($(this).attr('index'));
+                if ("FORM" == $(this).prop('tagName').toUpperCase()) {
+                    $("#" + $(this).attr('id') + " input.oemathclass-question-choice").prop('checked', false);
+                    if (entered[i] != null) {
+                        var checked = entered[i].split(',');
+                        for (var j = 0; j < checked.length; j++) {
+                            $("#" + $(this).attr('id') + " input[choiceindex=" + checked[j] + "]").prop('checked', true);
+                        }
+                    }
+                }
+                else if ("INPUT" == $(this).prop('tagName').toUpperCase()) {
+                    $(this).val(entered[i] ? entered[i] : '');
+                }
+            };
+        })(entered));
+    };
+    Problem.prototype.appendTo = function (id, phase) {
+        var html = this.htmlBase;
+        if (phase == Phase.Practice) {
+            html += this.htmlSubmit;
+            html += this.htmlSkip;
+            html += this.htmlStartReview;
+        }
+        else if (phase == Phase.Review) {
+            html += this.htmlShowAnswer;
+            html += this.htmlFinishReview;
+        }
+        html += this.htmlClosing;
+        $(id).empty().append(html);
+        this.fillEntered(this.entered);
+        if (phase == Phase.Practice) {
+            $(id + " input[index=0]").focus();
+        }
+        else if (phase == Phase.Review) {
+            $("#oemathid-question-html .oemathclass-input").prop("disabled", true);
+            $(".oemathclass-question-form input").prop("disabled", true);
+        }
+    };
+    Problem.prototype.process = function () {
         this.parseParameterMap();
         this.parameter = this.replaceKnownParameters(this.parameter);
-        this.parameter = this.replaceOemathTags(this.parameter, index);
+        this.parameter = this.replaceOemathTags(this.parameter, this.index);
         this.processAnswerType();
         this.question = this.replaceKnownParameters(this.question);
-        this.question = this.replaceOemathTags(this.question, index);
-        this.html = this.generateHtml();
+        this.question = this.replaceOemathTags(this.question, this.index);
+        this.generateHtmls();
         this.entered = new Array(this.inputCount);
+        this.entered_wrong = null;
         return true;
     };
     return Problem;
 })();
-function onclickSubmitPractice() {
+function onclickSubmit() { practice.onclickSubmit(); }
+function onclickSkip() { practice.onclickSkip(); }
+function onclickStartReview() { practice.onclickStartReview(); }
+function onclickFinishReview() { practice.onclickFinishReview(); }
+function onclickShowAnswer() {
+    var problem = practice.problem();
+    var btn = $('#oemathid-practice-show-answer');
+    var correct = "Show Correct Answer";
+    var yours = "Show Your Answer";
+    if (btn.text() == correct) {
+        btn.text(yours);
+        $('.oemathclass-input').each(function (index) {
+            if ("FORM" == $(this).prop('tagName').toUpperCase()) {
+                $("#" + $(this).attr('id') + " input.oemathclass-question-choice").each(function (index) {
+                    $(this).prop('checked', $(this).attr('expected') == '1' ? true : false);
+                });
+            }
+            else if ("INPUT" == $(this).prop('tagName').toUpperCase()) {
+                $(this).val($(this).attr('expected'));
+            }
+        });
+    }
+    else {
+        btn.text(correct);
+        problem.fillEntered(problem.entered_wrong ? problem.entered_wrong : problem.entered);
+    }
+}
+function onInputChange(elem) {
+    var content = '';
+    if ("FORM" == elem.tagName.toUpperCase()) {
+        var checked = $("#" + elem.getAttribute('id') + " .oemathclass-question-choice:checked");
+        var checked_marks = [];
+        for (var i = 0; i < checked.length; i++) {
+            var element = checked[i];
+            checked_marks.push(element.getAttribute('choiceindex'));
+        }
+        content += checked_marks.join(',');
+    }
+    else if ("INPUT" == elem.tagName.toUpperCase()) {
+        content += elem.value;
+    }
+    practice.problem().entered[parseInt(elem.getAttribute('index'))] = content;
+    console.log(elem.tagName + ":" + parseInt(elem.getAttribute('index')) + ":" + content);
 }
 //# sourceMappingURL=problem.js.map

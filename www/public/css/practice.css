@@ -1,0 +1,13 @@
+@CHARSET "UTF-8";
+
+.oemathclass-reviewbtn-active{
+	width: 56px;
+	height: 48px;
+    text-align: middle;
+    transform: translateY(-7px);
+}
+.oemathclass-reviewbtn-inactive{
+    width: 36px;
+    height: 34px;
+    text-align: middle;
+}
