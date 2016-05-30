@@ -23,7 +23,7 @@ class Progress
             return 'update';
         }
         else {
-            DB::insert("insert into {self::$table} (uid, grade, category, start, failure) values (?, ?, ?, ?, ?)", 
+            DB::insert("insert into ". self::$table. " (uid, grade, category, start, failure) values (?, ?, ?, ?, ?)", 
             [$uid, $grade, $category, $start, $failure]);
             return 'insert';
         }

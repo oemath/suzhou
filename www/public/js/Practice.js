@@ -39,10 +39,12 @@ var Practice = (function () {
     }
     Practice.prototype.ajaxNextProblem = function () {
         var problem = null;
+        var data = { grade: this.grade, category: this.category, index: this.problems.length, token: this.token };
+        data[csrf_key] = csrf_token;
         $.ajax({
-            type: "get",
+            type: "post",
             url: "/api/problem",
-            data: { grade: this.grade, category: this.category, index: this.problems.length, token: this.token },
+            data: data,
             dataType: "json",
             async: false,
             success: (function (thisObj) {
@@ -162,6 +164,32 @@ var Practice = (function () {
     Practice.prototype.onclickStartReview = function () {
         this.phase = Phase.Review;
         this.problem().appendTo(this.container, this.phase);
+        if (this.problems.length < this.count) {
+            return;
+        }
+        var statusArray = [];
+        this.problems.forEach(function (problem) {
+            statusArray.push(problem.reportStatus);
+        });
+        var status = statusArray.join(',');
+        var data = { grade: this.grade, category: this.category, status: status, token: this.token };
+        data[csrf_key] = csrf_token;
+        // Report status
+        $.ajax({
+            type: "post",
+            url: "/api/report-status",
+            data: data,
+            dataType: "json",
+            async: true,
+            success: function (data, textStatus, jqXHR) {
+                if (data.status == 'OK') {
+                }
+                else {
+                }
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+            },
+        });
     };
     Practice.prototype.onclickFinishReview = function () {
     };

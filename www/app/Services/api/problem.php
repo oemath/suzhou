@@ -2,44 +2,19 @@
 
 use Oemath\Models\Problem;
 
-function ok($result)
-{
-    $response = [
-            'status' => 'OK',
-            'result' => $result
-     ];
-    return json_encode($response);
-}
+require_once 'helper.php';
 
-function fail($info)
-{
-    $response = [
-            'status' => 'FAIL',
-            'result' => $info
-    ];
-    return json_encode($response);
-}
+$app->post('/api/problem', function() use ($app) {
 
-
-$app->get('/api/problem', function() use ($app) {
-
-    $request = $app->request;
-
-    $token = $request->get('token');
-    if ($token == null) {
+    $problem_ids = getProblemIds();
+    if (!$problem_ids) {
         echo fail('Session timeout');
         return;
     }
 
-    $problem_ids = $_SESSION[$token]['practice_problem_ids'];
-    if ($problem_ids == null) {
-        echo fail('Session timeout');
-        return;
-    }
-    
-    $grade = $request->get('grade');
-    $category = $request->get('category');
-    $index = $request->get('index');
+    $grade = $_REQUEST['grade'];
+    $category = $_REQUEST['category'];
+    $index = $_REQUEST['index'];
 
     if ($grade == null || $category == null || $index == null ||
         $index < 0 || $index >= count($problem_ids)) {    

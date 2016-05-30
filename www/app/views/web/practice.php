@@ -34,6 +34,8 @@ var category = {{category}};
 var index = 0;
 var count = {{count}};
 var token = "{{token}}";
+var csrf_key = "{{csrf_key}}";
+var csrf_token = "{{csrf_token}}";
 
 function disabl_backspace()
 {

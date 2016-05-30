@@ -3,6 +3,8 @@ declare var category: number;
 declare var index: number;
 declare var count: number;
 declare var token: string;
+declare var csrf_key: string;
+declare var csrf_token: string;
 
 enum Phase {
     Practice = 0, // submit, skip, start view
@@ -66,10 +68,13 @@ class Practice {
     public ajaxNextProblem(): Problem {
         let problem: Problem = null;
 
+        let data = { grade: this.grade, category: this.category, index: this.problems.length, token: this.token };
+        data[csrf_key] = csrf_token;
+
         $.ajax({
-            type: "get",
+            type: "post",
             url: "/api/problem",
-            data: { grade: this.grade, category: this.category, index: this.problems.length, token: this.token },
+            data: data,
             dataType: "json",
             async: false,
             success: (function (thisObj) {
@@ -210,6 +215,35 @@ class Practice {
     public onclickStartReview() {
         this.phase = Phase.Review;
         this.problem().appendTo(this.container, this.phase);
+
+        if (this.problems.length < this.count) {
+            return;
+        }
+
+        let statusArray: Answer[] = [];
+        this.problems.forEach(function (problem) {
+            statusArray.push(problem.reportStatus);
+        });
+        let status: string = statusArray.join(',');
+
+        let data = { grade: this.grade, category: this.category, status: status, token: this.token };
+        data[csrf_key] = csrf_token;
+        // Report status
+        $.ajax({
+            type: "post",
+            url: "/api/report-status",
+            data: data,
+            dataType: "json",
+            async: true,
+            success: function (data, textStatus, jqXHR) {
+                    if (data.status == 'OK') {
+                    }
+                    else {
+                    }
+                },
+            error: function (jqXHR, textStatus, errorThrown) {
+                },
+        });
     }
 
     public onclickFinishReview() {
