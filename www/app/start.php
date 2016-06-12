@@ -14,6 +14,8 @@ use Oemath\Helpers\Hash;
 use Oemath\Validation\Validator;
 use Oemath\Mail\Mailer;
 
+use Oemath\Models\Category;
+
 use Oemath\Middleware\BeforeMiddleware;
 use Oemath\Middleware\CsrfMiddleware;
 
@@ -46,6 +48,10 @@ $app->auth = false;
 ///////////////////////
 $app->container->set('user', function() {
     return new User;
+});
+
+$app->container->set('category', function() {
+    return new Category;
 });
 
 $app->container->singleton('progress', function() {
@@ -94,12 +100,3 @@ $view->parserOptions = [
 $view->parserExtensions = [
     new TwigExtension
 ];
-
-
-#$progress = $app->progress->update(12, 5, 501, 10, '1,2,5,6,8');
-
-#$progress = $app->progress->select(12, 5, 501);
-
-
-
-?>

@@ -43,7 +43,7 @@ $app->post('/login', $guest(), function() use($app) {
                 $app->setCookie(
                         $app->config->get('auth.remember'),
                         "{$rememberIdentifier}___{$rememberToken}",
-                        Carbon::parse('+1 week')->timestamp);
+                        Carbon::parse('+6 month')->timestamp);
             }
             
             $app->flash('global', 'You are now signed in!');

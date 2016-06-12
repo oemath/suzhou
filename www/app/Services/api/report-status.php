@@ -1,6 +1,7 @@
 <?php
 
 use Oemath\Models\Progress;
+use Oemath\Models\Problem;
 
 require_once 'helper.php';
 
@@ -25,17 +26,19 @@ $app->post('/api/report-status', function() use ($app) {
 
     if ($app->auth) {
         $status_array = explode(',', $status);
+        $failures = array();
+
+        $i = 0;
         $length = count($status_array);
-        if ($length == count($problem_ids)) {
-            $failures = array();
-            $max_pid = 0;
-            for ($i=0; $i < $length; $i++) {
-                if ($status_array[$i] != 0) {
-                    array_push($failures, $problem_ids[$i]);
-                }
-                $max_pid = max($max_pid, $problem_ids[$i]);
+        for (; $i < $length; $i++) {
+            if ($status_array[$i] != 0) {
+                $failures[$problem_ids[$i]] = 1;
             }
-            Progress::update($app->auth->id, $grade, $category, $max_pid + 1, join($failures, ','));
         }
+        $length = count($problem_ids);
+        for (; $i < $length; $i++) {
+            $failures[$problem_ids[$i]] = 1;
+        }
+        Progress::update($app->auth->id, $grade, $category, max($problem_ids) + 1, join(array_keys($failures), ','));
     }
 });

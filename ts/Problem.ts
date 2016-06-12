@@ -1,6 +1,7 @@
 ﻿/// <reference path="../Scripts/typings/jquery/jquery.d.ts" />
 
 declare var practice: Practice;
+declare var MathJax: any;
 
 const SVG_VERTICAL_CHAR_WIDTH: number = 32;
 const SVG_VERTICAL_CHAR_HEIGHT: number = 44; // 40 will cause the inputing digit is higher
@@ -65,6 +66,7 @@ class Problem {
     public parameter: string;
     public knowledge: string;
     public hint: string;
+    public flag: number;
 
     ///////////
     // derived
@@ -75,6 +77,7 @@ class Problem {
     // html to be appended
     public htmlBase: string;
     public htmlSubmit: string;
+    public htmlAnswer: string;
     public htmlShowAnswer: string;
     public htmlSkip: string;
     public htmlStartReview: string;
@@ -104,6 +107,7 @@ class Problem {
         this.parameter = prob.parameter;
         this.knowledge = prob.knowledge;
         this.hint = prob.hint;
+        this.flag = prob.flag;
 
         this.inputCount = 0;
 
@@ -362,7 +366,7 @@ class Problem {
 
         //<script-canvas#>
         question = question.replace(/<\s*script-canvas(\d*)\s*>/, function (m, $1) {
-            return "<script>var ctx = document.getElementById('oemath-canvas" + $1 + "').getContext('2d');"
+            return "<script>var ctx = document.getElementById('oemath-canvas" + $1 + "').getContext('2d'); ";
         });
 
         //<input[#](expected[,placeholder,width,x,y])>
@@ -520,21 +524,22 @@ class Problem {
     {
         this.htmlBase = 
 `<div id="oemathid-question-html"><hr/><h1 class="oemathclass-practice-title">Question</h1>\
-<div class="oemathclass-practice-question">\
-<h3 id="oemathid-practice-question" class="oemathclass-practice-question">${this.question}</h3>\
-</div><hr/>\
+<h3 id="oemathid-practice-question" class="oemathclass-practice-question ${this.flag == 1 ? "oemathclass-mathjax" : ""}">${this.question}</h3>\
 <div class="form-inline">`;
+
+        this.htmlSubmit = `<button id="oemathid-practice-submit" class="oemathclass-practice-button" onclick="onclickSubmit()">Submit</button>`;
+        this.htmlShowAnswer = `<button id="oemathid-practice-show-answer" class="oemathclass-practice-button" onclick="onclickShowAnswer()">Show Correct Answer</button>`;
 
         if (this.type == ProblemType.Normal || this.type == ProblemType.Literal || this.type == ProblemType.Function) {
             let answerHint: string = this.value_map['<ans_hint>'];
             if (!answerHint) answerHint = this.value_map['<ans>'];
-            this.htmlBase +=
-`<h1 class="oemathclass-answer-title">Answer</h1><div class="form-inline">\
-<input index="${(this.inputCount++)}" id="oemathid-answer-input-0" type="text" class="form-control oemathclass-answer-input oemathclass-input" expected='${answerHint}' oninput="onInputChange(this)">`;
+            this.htmlAnswer =
+                `<input index="${(this.inputCount++)}" id="oemathid-answer-input-0" type="text" class="form-control oemathclass-answer-input oemathclass-input" expected='${answerHint}' oninput="onInputChange(this)">`;
+        }
+        else {
+            this.htmlAnswer = "";
         }
 
-        this.htmlSubmit = `<button id="oemathid-practice-submit" class="oemathclass-practice-button" onclick="onclickSubmit()">Submit</button>`;
-        this.htmlShowAnswer = `<button id="oemathid-practice-show-answer" class="oemathclass-practice-button" onclick="onclickShowAnswer()">Show Correct Answer</button>`;
         this.htmlSkip = `<button id="oemathid-practice-skip" class="oemathclass-practice-button" onclick="onclickSkip()">Skip</button>`;
         this.htmlStartReview = `<button id="oemathid-practice-start-review" class="oemathclass-practice-button" onclick="onclickStartReview()">Start Review</button>`;
         this.htmlFinishReview = `<button id="oemathid-practice-finish-review" class="oemathclass-practice-button" onclick="onclickFinishReview()">Finish Review</button>`;
@@ -567,15 +572,18 @@ class Problem {
         let html: string = this.htmlBase;
         if (phase == Phase.Practice) {
             html += this.htmlSubmit;
+            html += this.htmlAnswer;
             html += this.htmlSkip;
             html += this.htmlStartReview;
         }
         else if (phase == Phase.Review) {
             html += this.htmlShowAnswer;
+            html += this.htmlAnswer;
             html += this.htmlFinishReview;
         }
         html += this.htmlClosing;
         $(id).empty().append(html);
+        MathJax.Hub.Queue(["Typeset", MathJax.Hub, ".oemathclass-mathjax"], function () { $('.oemathclass-mathjax').css("visibility", "visible"); });
         this.fillEntered(this.entered);
 
         if (phase == Phase.Practice) {
@@ -652,6 +660,5 @@ function onInputChange(elem) {
     }
 
     practice.problem().entered[parseInt(elem.getAttribute('index'))] = content;
-    console.log(`${elem.tagName}:${parseInt(elem.getAttribute('index'))}:${content}`);
 }
 

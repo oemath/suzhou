@@ -1,5 +1,9 @@
 @CHARSET "UTF-8";
 
+#oemathid-reviewbtn-container{
+	margin: 0 auto;
+	text-align: center;
+}
 .oemathclass-reviewbtn-active{
 	width: 56px;
 	height: 48px;
@@ -10,4 +14,12 @@
     width: 36px;
     height: 34px;
     text-align: middle;
+}
+
+#oemathid-practice-question{
+	min-height: 300px;
+}
+
+.oemathclass-mathjax{
+	visibility: hidden;
 }

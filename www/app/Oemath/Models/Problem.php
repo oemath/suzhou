@@ -20,7 +20,7 @@ class Problem
         
         try {
             $problems = DB::select(
-                    "select type, level, question, parameter, knowledge, hint
+                    "select type, level, question, parameter, knowledge, hint, flag
                      from g{$grade}c{$category}
                      where id = {$pid}");
             
@@ -72,11 +72,7 @@ class Problem
                 }
             }
 
-            $problem_ids = array();
-            foreach ($problems as $key => $value) {
-                array_push($problem_ids, $value->id);
-            }
-            return $problem_ids;
+            return array_map(function($a) { return $a->id; }, $problems);
         }
         catch ( \Illuminate\Database\QueryException $e) {
             return null;

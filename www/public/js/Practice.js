@@ -3,28 +3,13 @@ var Phase;
     Phase[Phase["Practice"] = 0] = "Practice";
     Phase[Phase["Review"] = 1] = "Review";
 })(Phase || (Phase = {}));
-function showProblem(problem) {
-    if (problem == null)
-        return;
-    /*    $('#problem-index').text("Index: "+index);
-        $('#problem-type').text(problem.type);
-        $('#problem-level').text(problem.level);
-        $('#problem-question').text(problem.question);
-        $('#problem-parameter').text(problem.parameter);
-        $('#problem-knowledge').text(problem.knowledge);
-        $('#problem-hint').text(problem.hint);
-        $('#problem-question-parsed').text(problem.question);
-        */
-    problem.appendTo(practice.container, practice.phase);
-}
 function onclickReviewBtn(index) {
     if (practice.current == index)
         return;
     if (index < 0 || index >= practice.problems.length)
         return;
     var problem = practice.problems[index];
-    showProblem(problem);
-    practice.jumpTo(index);
+    practice.showProblem(problem);
 }
 var Practice = (function () {
     function Practice(grade, category, count, token) {
@@ -61,25 +46,11 @@ var Practice = (function () {
             },
         });
         if (problem) {
-            practice.problems.push(problem);
+            this.problems.push(problem);
             this.enable(problem.index);
             this.setColorSkipped(problem.index);
-            showProblem(problem);
         }
         return problem;
-    };
-    Practice.prototype.jumpTo = function (index) {
-        if (this.current != index) {
-            $("#oemathid-reviewbtn-" + this.current)
-                .removeClass('oemathclass-reviewbtn-active')
-                .addClass('oemathclass-reviewbtn-inactive');
-        }
-        if (0 <= index && index < this.problems.length) {
-            $("#oemathid-reviewbtn-" + index)
-                .removeClass('oemathclass-reviewbtn-inactive')
-                .addClass('oemathclass-reviewbtn-active');
-            this.current = index;
-        }
     };
     Practice.prototype.setTextColorWrong = function (index) { $("#oemathid-reviewbtn-" + index).css("color", "red"); };
     Practice.prototype.setColor = function (index, color) { $("#oemathid-reviewbtn-" + index).css("background-color", color); };
@@ -104,10 +75,6 @@ var Practice = (function () {
             if (this.problems.length < this.count) {
                 nextProblem = this.ajaxNextProblem();
                 if (!nextProblem) {
-                }
-                else {
-                    this.enable(nextProblem.index);
-                    this.setColorSkipped(nextProblem.index);
                 }
             }
             else {
@@ -135,9 +102,22 @@ var Practice = (function () {
             }
         }
         if (nextProblem.index != this.current) {
-            this.jumpTo(nextProblem.index);
-            showProblem(nextProblem);
+            this.showProblem(nextProblem);
         }
+    };
+    Practice.prototype.showProblem = function (problem) {
+        if (problem == null)
+            return;
+        problem.appendTo(this.container, this.phase);
+        if (this.current != problem.index) {
+            $("#oemathid-reviewbtn-" + this.current)
+                .removeClass('oemathclass-reviewbtn-active')
+                .addClass('oemathclass-reviewbtn-inactive');
+        }
+        $("#oemathid-reviewbtn-" + problem.index)
+            .removeClass('oemathclass-reviewbtn-inactive')
+            .addClass('oemathclass-reviewbtn-active');
+        this.current = problem.index;
     };
     Practice.prototype.onclickSubmit = function () {
         var problem = this.problem();
@@ -164,16 +144,9 @@ var Practice = (function () {
     Practice.prototype.onclickStartReview = function () {
         this.phase = Phase.Review;
         this.problem().appendTo(this.container, this.phase);
-        if (this.problems.length < this.count) {
-            return;
-        }
-        var statusArray = [];
-        this.problems.forEach(function (problem) {
-            statusArray.push(problem.reportStatus);
-        });
-        var status = statusArray.join(',');
+        var status = this.problems.map(function (a) { return a.reportStatus; }).join(',');
         var data = { grade: this.grade, category: this.category, status: status, token: this.token };
-        data[csrf_key] = csrf_token;
+        data[csrf_key] = csrf_token; // Required for POST
         // Report status
         $.ajax({
             type: "post",
@@ -196,17 +169,17 @@ var Practice = (function () {
     return Practice;
 })();
 var practice = new Practice(grade, category, count, token);
-practice.current = 0;
-var problem = practice.ajaxNextProblem();
-if (problem) {
-    showProblem(problem);
-    practice.jumpTo(0);
-}
-$(document).keypress(function (e) {
-    if (e.which == 13) {
-        if (practice) {
-            practice.onclickSubmit();
+$(function () {
+    $(document).keypress(function (e) {
+        if (e.which == 13) {
+            if (practice) {
+                practice.onclickSubmit();
+            }
         }
+    });
+    var problem = practice.ajaxNextProblem();
+    if (problem) {
+        practice.showProblem(problem);
     }
 });
 //# sourceMappingURL=practice.js.map

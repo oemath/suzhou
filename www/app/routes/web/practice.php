@@ -5,7 +5,7 @@ use Oemath\Models\Problem;
 
 $app->get('/practice', function() use ($app) {
     
-    $PROBLEMS_COUNT = 5;
+    $PROBLEMS_COUNT = 25;
 
     $request = $app->request;
     

@@ -11,30 +11,12 @@ enum Phase {
     Review = 1,
 }
 
-function showProblem(problem: Problem) {
-    if (problem == null) return;
-
-/*    $('#problem-index').text("Index: "+index);
-    $('#problem-type').text(problem.type);
-    $('#problem-level').text(problem.level);
-    $('#problem-question').text(problem.question);
-    $('#problem-parameter').text(problem.parameter);
-    $('#problem-knowledge').text(problem.knowledge);
-    $('#problem-hint').text(problem.hint);
-    $('#problem-question-parsed').text(problem.question);
-    */
-    problem.appendTo(practice.container, practice.phase);
-}
-
-
 function onclickReviewBtn(index: number) {
     if (practice.current == index) return;
     if (index < 0 || index >= practice.problems.length) return;
 
     let problem: Problem = practice.problems[index];
-    showProblem(problem);
-
-    practice.jumpTo(index);
+    practice.showProblem(problem);
 }
 
 class Practice {
@@ -92,31 +74,14 @@ class Practice {
         });
 
         if (problem) {
-            practice.problems.push(problem);
+            this.problems.push(problem);
             this.enable(problem.index);
             this.setColorSkipped(problem.index);
-            showProblem(problem);
         }
 
         return problem;
     }
 
-
-    public jumpTo(index: number) {
-        if (this.current != index) {
-            $(`#oemathid-reviewbtn-${this.current}`)
-                .removeClass('oemathclass-reviewbtn-active')
-                .addClass('oemathclass-reviewbtn-inactive');
-        }
-
-        if (0 <= index && index < this.problems.length) {
-            $(`#oemathid-reviewbtn-${index}`)
-                .removeClass('oemathclass-reviewbtn-inactive')
-                .addClass('oemathclass-reviewbtn-active');
-
-            this.current = index;
-        }
-    }
 
     private setTextColorWrong(index: number) { $(`#oemathid-reviewbtn-${index}`).css("color", "red"); }
     private setColor(index: number, color: string) { $(`#oemathid-reviewbtn-${index}`).css("background-color", color); }
@@ -145,10 +110,6 @@ class Practice {
                 nextProblem = this.ajaxNextProblem();
                 if (!nextProblem) {
                     // error handling.
-                }
-                else {
-                    this.enable(nextProblem.index);
-                    this.setColorSkipped(nextProblem.index);
                 }
             }
             else { // All problems have been seen.
@@ -179,9 +140,26 @@ class Practice {
         }
 
         if (nextProblem.index != this.current) {
-            this.jumpTo(nextProblem.index);
-            showProblem(nextProblem);
+            this.showProblem(nextProblem);
         }        
+    }
+
+
+    public showProblem(problem: Problem) {
+        if (problem == null) return;
+        problem.appendTo(this.container, this.phase);
+
+        if (this.current != problem.index) {
+            $(`#oemathid-reviewbtn-${this.current}`)
+                .removeClass('oemathclass-reviewbtn-active')
+                .addClass('oemathclass-reviewbtn-inactive');
+        }
+
+        $(`#oemathid-reviewbtn-${problem.index}`)
+            .removeClass('oemathclass-reviewbtn-inactive')
+            .addClass('oemathclass-reviewbtn-active');
+
+        this.current = problem.index;
     }
 
 
@@ -216,18 +194,10 @@ class Practice {
         this.phase = Phase.Review;
         this.problem().appendTo(this.container, this.phase);
 
-        if (this.problems.length < this.count) {
-            return;
-        }
-
-        let statusArray: Answer[] = [];
-        this.problems.forEach(function (problem) {
-            statusArray.push(problem.reportStatus);
-        });
-        let status: string = statusArray.join(',');
+        let status: string = this.problems.map(function (a: Problem) { return a.reportStatus; }).join(',');
 
         let data = { grade: this.grade, category: this.category, status: status, token: this.token };
-        data[csrf_key] = csrf_token;
+        data[csrf_key] = csrf_token; // Required for POST
         // Report status
         $.ajax({
             type: "post",
@@ -252,17 +222,18 @@ class Practice {
 
 var practice: Practice = new Practice(grade, category, count, token);
 
-practice.current = 0;
-let problem: Problem = practice.ajaxNextProblem();
-if (problem) {
-    showProblem(problem);
-    practice.jumpTo(0);
-}
+$(function () {
 
-$(document).keypress(function (e) {
-    if (e.which == 13) {
-        if (practice) {
-            practice.onclickSubmit();
+    $(document).keypress(function (e) {
+        if (e.which == 13) {
+            if (practice) {
+                practice.onclickSubmit();
+            }
         }
+    });
+
+    let problem: Problem = practice.ajaxNextProblem();
+    if (problem) {
+        practice.showProblem(problem);
     }
 });

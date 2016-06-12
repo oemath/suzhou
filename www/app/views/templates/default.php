@@ -14,13 +14,17 @@
     
     {% if practice_css %}
     	<link rel="stylesheet" href="/css/practice.css">
+    	<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     {% endif %}
+    <link rel="stylesheet" href="/css/oemath.css">
 </head>
 <body>
-	{% include 'templates/partials/header.php' %}
-	{% include 'templates/partials/navigation.php' %}
-	{% include 'templates/partials/messages.php' %}
-	
-	{% block content %}{% endblock %}
+<div id="oemathid-page-container">
+<div id="oemathid-page-header">	{% include 'templates/partials/header.php' %}</div>
+<div id="oemathid-page-navigation">{% include 'templates/partials/navigation.php' %}</div>
+<div id="oemathid-page-message">{% include 'templates/partials/messages.php' %}</div>
+<div id="oemathid-page-content">{% block content %}{% endblock %}</div>
+<div id="oemathid-page-footer">{% include 'templates/partials/footer.php' %}</div>
+</div>
 </body>
 </html>

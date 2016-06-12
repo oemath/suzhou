@@ -24,6 +24,7 @@ require INC_ROOT . '/app/Services/services.php';
 
 
 require INC_ROOT . '/app/routes/web/practice.php';
+require INC_ROOT . '/app/routes/web/math.php';
 
 
 ?>
