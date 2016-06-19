@@ -4,7 +4,7 @@
 
 {% block content %}
 <div>
-<h1>Practice - Grade {{grade}} - {{title}}</h1>
+<h1 style="color:green">Practice - Grade {{grade}} - {{title}}</h1>
 <div id="oemathid-reviewbtn-container">
 	<div class="btn-group" role="group" aria-label="...">
 		{% for i in 0..count-1 %}

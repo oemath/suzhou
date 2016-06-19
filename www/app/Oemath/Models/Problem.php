@@ -20,7 +20,7 @@ class Problem
         
         try {
             $problems = DB::select(
-                    "select type, level, question, parameter, knowledge, hint, flag
+                    "select type, level, flag, question, parameter, knowledge, hint, flag
                      from g{$grade}c{$category}
                      where id = {$pid}");
             
@@ -77,5 +77,21 @@ class Problem
         catch ( \Illuminate\Database\QueryException $e) {
             return null;
         }        
+    }
+    
+    static public function selectAllProblemIds($grade, $category)
+    {
+        try {
+            $problems = DB::select(
+                    //"select type, level, question, parameter, knowledge, hint 
+                    "select id 
+                    from g{$grade}c{$category} 
+                     order by id asc");
+
+            return array_map(function($a) { return $a->id; }, $problems);
+        }
+        catch ( \Illuminate\Database\QueryException $e) {
+            return null;
+        }     
     }
 }

@@ -524,11 +524,11 @@ class Problem {
     {
         this.htmlBase = 
 `<div id="oemathid-question-html"><hr/><h1 class="oemathclass-practice-title">Question</h1>\
-<h3 id="oemathid-practice-question" class="oemathclass-practice-question ${this.flag == 1 ? "oemathclass-mathjax" : ""}">${this.question}</h3>\
-<div class="form-inline">`;
+<div id="oemathid-practice-question" class="oemathclass-practice-question ${this.flag == 1 ? "oemathclass-mathjax" : ""}">${this.question}</div>\
+<div class="form-inline" style="width:100%">`;
 
-        this.htmlSubmit = `<button id="oemathid-practice-submit" class="oemathclass-practice-button" onclick="onclickSubmit()">Submit</button>`;
-        this.htmlShowAnswer = `<button id="oemathid-practice-show-answer" class="oemathclass-practice-button" onclick="onclickShowAnswer()">Show Correct Answer</button>`;
+        this.htmlSubmit = `<button id="oemathid-practice-submit" class="oemathclass-practice-button oemathclass-button btn" onclick="onclickSubmit()">Submit</button>`;
+        this.htmlShowAnswer = `<button id="oemathid-practice-show-answer" class="oemathclass-practice-button oemathclass-button btn width200" onclick="onclickShowAnswer()">Show Correct Answer</button>`;
 
         if (this.type == ProblemType.Normal || this.type == ProblemType.Literal || this.type == ProblemType.Function) {
             let answerHint: string = this.value_map['<ans_hint>'];
@@ -540,9 +540,9 @@ class Problem {
             this.htmlAnswer = "";
         }
 
-        this.htmlSkip = `<button id="oemathid-practice-skip" class="oemathclass-practice-button" onclick="onclickSkip()">Skip</button>`;
-        this.htmlStartReview = `<button id="oemathid-practice-start-review" class="oemathclass-practice-button" onclick="onclickStartReview()">Start Review</button>`;
-        this.htmlFinishReview = `<button id="oemathid-practice-finish-review" class="oemathclass-practice-button" onclick="onclickFinishReview()">Finish Review</button>`;
+        this.htmlSkip = `<button id="oemathid-practice-skip" class="oemathclass-practice-button oemathclass-button btn oemathclass-right" onclick="onclickSkip()">Skip</button>`;
+        this.htmlStartReview = `<button id="oemathid-practice-start-review" class="oemathclass-practice-button oemathclass-button btn oemathclass-right" onclick="onclickStartReview()">Start Review</button>`;
+        this.htmlFinishReview = `<button id="oemathid-practice-finish-review" class="oemathclass-practice-button oemathclass-button btn oemathclass-right" onclick="onclickFinishReview()">Finish Review</button>`;
         this.htmlClosing = `</div>`;
     }
 
@@ -573,8 +573,8 @@ class Problem {
         if (phase == Phase.Practice) {
             html += this.htmlSubmit;
             html += this.htmlAnswer;
-            html += this.htmlSkip;
             html += this.htmlStartReview;
+            html += this.htmlSkip;
         }
         else if (phase == Phase.Review) {
             html += this.htmlShowAnswer;

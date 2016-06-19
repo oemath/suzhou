@@ -11,7 +11,7 @@ $app->get('/practice', function() use ($app) {
     
     $grade = $request->get("grade");
     $category = $request->get("category");
-    $title = $request->get("title");
+    $title = htmlspecialchars_decode($request->get("title"));
 
     if (!$grade || !$category || !$title) {
         echo 'Invalid request';

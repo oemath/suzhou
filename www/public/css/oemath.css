@@ -5,6 +5,21 @@ body{
     max-width: 1200px;
 }
 
+.width100{ width: 100px; }
+.width120{ width: 120px; }
+.width150{ width: 150px; }
+.width200{ width: 200px; }
+.oemathclass-right { float: right; }
+
+.oemathclass-button{
+    background-color: lightgreen;
+    border-color: green;
+}
+
+.oemathclass-button:hover{
+    background-color: rgb(160,255,120);
+}
+
 #oemathid-page-container{
 	width: 100%;
 }
@@ -167,3 +182,4 @@ div.oemathclass-inactive a{
     font-size: 32px;
     text-align: center;
 }
+
