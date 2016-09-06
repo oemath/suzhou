@@ -75,12 +75,14 @@ $app->get('/insert/getproblem', function() use ($app) {
 
 function escape_sql_string($query)
 {
-    return str_replace("'", "''", str_replace("\\", "\\\\", $query));
+  //  return str_replace("'", "''", str_replace("\\", "\\\\", $query));
+  return $query;
 }
     
 function unescape_sql_string($query)
 {
-    return str_replace("''", "'", str_replace("\\\\", "\\", $query));
+//    return str_replace("''", "'", str_replace("\\\\", "\\", $query));
+  return $query;
 }
     
 $app->post('/insert/save', function() use ($app) {
@@ -116,7 +118,7 @@ $app->post('/insert/save', function() use ($app) {
                 'parameter' => $parameter,
                 'knowledge' => null,
                 'hint' => $hint,
-                'flag' => 0
+                'flag' => $flag
         ]]);
     }
     

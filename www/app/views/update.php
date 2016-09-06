@@ -127,14 +127,13 @@
 	        <label>Type:</label>
 			<select id="prob-type" class="form-control width150 oemath-input-catch">
 		        <option value="0">0&nbsp;-&nbsp;Normal</option>
-		        <option value="1">1&nbsp;-&nbsp;Literal</option>
+		        <option value="1">1&nbsp;-&nbsp;Inline</option>
 		        <option value="2">2&nbsp;-&nbsp;Function</option>
-		        <option value="3">3&nbsp;-&nbsp;Radio</option>
-		        <option value="4">4&nbsp;-&nbsp;TrueFalse</option>
-		        <option value="5">5&nbsp;-&nbsp;Checkbox</option>
-		        <option value="6">6&nbsp;-&nbsp;Inline</option>
-		        <option value="7">7&nbsp;-&nbsp;InlineLiteral</option>
-		        <option value="8">8&nbsp;-&nbsp;InlineFunction</option>
+		        <option value="3">3&nbsp;-&nbsp;InlineFunction</option>
+		        <option value="4">4&nbsp;-&nbsp;Radio</option>
+		        <option value="5">5&nbsp;-&nbsp;TrueFalse</option>
+		        <option value="6">6&nbsp;-&nbsp;Checkbox</option>
+		        <option value="7">7&nbsp;-&nbsp;Customized</option>
 			</select>
 	    </div>
 	    <div class="button-left">
@@ -143,7 +142,7 @@
 	    </div>
 	    <div class="button-left">
 	        <label>Flag:</label>
-	        <input type="number" class="form-control width80" id="prob-flag" value="0"></input>
+	        <input type="number" class="form-control oemath-input-catch width80" id="prob-flag" value="0"></input>
 	    </div>
 	    
 	    <div class="button-right">
@@ -404,7 +403,7 @@
 		function gather_prob_data() {
 			var prob = {};
 
-			prob.type = $('#prob-type').val();  if (!prob.type) { prob.type = PROB_TYPE_NORMAL; $('#prob-type').val(prob.type); }
+			prob.type = $('#prob-type').val();  if (!prob.type) { prob.type = 0; $('#prob-type').val(prob.type); }
 		    prob.level = $('#prob-level').val(); if (!prob.level) { prob.level = 1; $('#prob-level').val(prob.level); }
 		    prob.flag = $('#prob-flag').val(); if (!prob.flag) { prob.flag = 0; $('#prob-flag').val(prob.flag); }
 		    prob.question = $('#prob-problem').val();
@@ -598,6 +597,11 @@
 
 	        $(".oemath-input-catch").on("input", function () {
 				refresh_input_to_preview_dirty();
+		    });
+
+		    $('#preview-container').mousemove(function(e){
+			    var p = $('#oemath-canvas1').offset();
+		    	$("#prob-info").text((event.pageX-p.left) + ", " + (event.pageY-p.top));
 		    });
 		});
 		

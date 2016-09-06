@@ -1,17 +1,29 @@
 /// <reference path="../Scripts/typings/jquery/jquery.d.ts" />
 var SVG_VERTICAL_CHAR_WIDTH = 32;
 var SVG_VERTICAL_CHAR_HEIGHT = 44; // 40 will cause the inputing digit is higher
+/*enum ProblemType {
+    Normal = 0,             => 0
+    Literal = 1,            => 0
+    Function = 2,           => 2
+    Radio = 3,              => 4
+    TrueFalse = 4,          => 5
+    Checkbox = 5,           => 6
+    Inline = 6,             => 1
+    InlineLiteral = 7,
+    InlineFunction = 8,
+    Customized = 9,
+    CustomizedFunction = 10
+}*/
 var ProblemType;
 (function (ProblemType) {
     ProblemType[ProblemType["Normal"] = 0] = "Normal";
-    ProblemType[ProblemType["Literal"] = 1] = "Literal";
+    ProblemType[ProblemType["Inline"] = 1] = "Inline";
     ProblemType[ProblemType["Function"] = 2] = "Function";
-    ProblemType[ProblemType["Radio"] = 3] = "Radio";
-    ProblemType[ProblemType["TrueFalse"] = 4] = "TrueFalse";
-    ProblemType[ProblemType["Checkbox"] = 5] = "Checkbox";
-    ProblemType[ProblemType["Inline"] = 6] = "Inline";
-    ProblemType[ProblemType["InlineLiteral"] = 7] = "InlineLiteral";
-    ProblemType[ProblemType["InlineFunction"] = 8] = "InlineFunction";
+    ProblemType[ProblemType["InlineFunction"] = 3] = "InlineFunction";
+    ProblemType[ProblemType["Radio"] = 4] = "Radio";
+    ProblemType[ProblemType["TrueFalse"] = 5] = "TrueFalse";
+    ProblemType[ProblemType["Checkbox"] = 6] = "Checkbox";
+    ProblemType[ProblemType["Customized"] = 7] = "Customized";
 })(ProblemType || (ProblemType = {}));
 var ProblemLevel;
 (function (ProblemLevel) {
@@ -81,9 +93,9 @@ var Problem = (function () {
     Problem.prototype.evalLiteral = function (entered, expected) {
         entered = entered.replace(/\s/g, '').toLowerCase();
         var candidates = expected.split(';;');
-        for (var candidate in candidates) {
-            candidate = candidate.replace(/\s/g, '').toLowerCase();
-            if (candidate.length > 0 && entered == candidate) {
+        for (var i = 0; i < candidates.length; i++) {
+            candidates[i] = candidates[i].replace(/\s/g, '').toLowerCase();
+            if (candidates[i].length > 0 && entered == candidates[i]) {
                 return true;
             }
         }
@@ -97,11 +109,11 @@ var Problem = (function () {
             var range = parameter.trim().split('-');
             var first = this.eval(range[0]);
             var last = this.eval(range[1]);
-            return first + rand(last - first + 1);
+            return first + oe.rand(last - first + 1);
         }
         else {
             var enum_list = parameter.split(',');
-            return this.eval(enum_list[rand(enum_list.length)]);
+            return this.eval(enum_list[oe.rand(enum_list.length)]);
         }
     };
     Problem.prototype.evalRandom = function (parameter) {
@@ -119,11 +131,13 @@ var Problem = (function () {
         var parameter_list = this.splitParameter();
         for (var _i = 0; _i < parameter_list.length; _i++) {
             var parameter = parameter_list[_i];
+            var name_1 = 'ans';
+            var value = parameter.trim();
             var eql = parameter.indexOf('=');
-            if (eql < 0)
-                continue;
-            var name_1 = parameter.substr(0, eql).trim();
-            var value = parameter.substr(eql + 1).trim();
+            if (eql >= 0) {
+                name_1 = parameter.substr(0, eql).trim();
+                value = parameter.substr(eql + 1).trim();
+            }
             value = this.replaceKnownParameters(value).replace(/[\r\n]/g, '');
             value = this.evalRandom(value);
             if (!(name_1 == 'ans' && (this.type == ProblemType.Function ||
@@ -286,9 +300,13 @@ var Problem = (function () {
         question = question.replace(/<\s*canvas(\d*)\s*\(\s*(\d+)\s*,\s*(\d+)\)\s*>(.*?)<\s*\/canvas\s*>/g, function (m, $1, $2, $3, $4) {
             return "<div id='oemath-canvas-div" + $1 + "' style='position:relative;width:" + $2 + "px;height:" + $3 + "px'><canvas id='oemath-canvas" + $1 + "' width='" + $2 + "' height='" + $3 + "'>" + $4 + "<\/canvas><\/div>";
         });
+        //<canvas#(<w>,<h>)></canvas>
+        question = question.replace(/<\s*center-canvas(\d*)\s*\(\s*(\d+)\s*,\s*(\d+)\)\s*>(.*?)<\s*\/canvas\s*>/g, function (m, $1, $2, $3, $4) {
+            return "<div id='oemath-canvas-div" + $1 + "' style='display:block;margin:auto;position:relative;width:" + $2 + "px;height:" + $3 + "px'><canvas id='oemath-canvas" + $1 + "' width='" + $2 + "' height='" + $3 + "'>" + $4 + "<\/canvas><\/div>";
+        });
         //<script-canvas#>
         question = question.replace(/<\s*script-canvas(\d*)\s*>/, function (m, $1) {
-            return "<script>var ctx = document.getElementById('oemath-canvas" + $1 + "').getContext('2d'); ";
+            return "<script>var ctx = document.getElementById('oemath-canvas" + $1 + "').getContext('2d'); ctx.lineWidth = 1; ctx.strokeStyle = 'black'; ctx.fillStyle = 'rgba(128,128,128,1)'; ctx.font = '20px Arial';";
         });
         //<input[#](expected[,placeholder,width,x,y])>
         /* define css style for class: oemathclass-inline-input
@@ -347,7 +365,7 @@ var Problem = (function () {
             var index_1 = new Array(options.length);
             for (var i = 0; i < options.length; i++)
                 index_1[i] = i;
-            shuffle(index_1);
+            oe.shuffle(index_1);
             for (var idx = 0; idx < index_1.length; idx++) {
                 var i_1 = index_1[idx];
                 var expected = i_1 == 0 ? 1 : 0;
@@ -361,7 +379,7 @@ var Problem = (function () {
             var index_2 = new Array(options.length - 1);
             for (var i = 1; i < options.length; i++)
                 index_2[i - 1] = i - 1;
-            shuffle(index_2);
+            oe.shuffle(index_2);
             for (var idx = 0; idx < index_2.length; idx++) {
                 var i_2 = index_2[idx];
                 var expected = i_2 < corrects ? 1 : 0;
@@ -372,7 +390,30 @@ var Problem = (function () {
         answer_html += "<\/form>";
         this.value_map['<ans>'] = answer_html;
     };
+    Problem.prototype.checkIncomplete = function () {
+        var inputElems = $('input[index],form[index]');
+        for (var i = 0; i < inputElems.length; i++) {
+            var inputElem = inputElems[i];
+            if (inputElem.style.visibility != 'hidden') {
+                var tag = inputElem.tagName.toUpperCase();
+                if (tag == 'FORM') {
+                    var checked = $("#" + inputElem.getAttribute('id') + " .oemathclass-question-choice:checked");
+                    if (checked.length == 0) {
+                        return false;
+                    }
+                }
+                else if (tag == 'INPUT') {
+                    if (inputElem.value.trim().length == 0) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    };
     Problem.prototype.checkAnswer = function () {
+        if (!this.checkIncomplete())
+            return Answer.Incomplete;
         var correct = true;
         var answer_entered;
         var answer_expected;
@@ -394,36 +435,53 @@ var Problem = (function () {
                     return Answer.Incomplete;
                 break;
             case ProblemType.Normal:
-                answer_entered = $("#oemathid-answer-input-0").val().trim();
-                if (answer_entered.length == 0) {
-                    return Answer.Incomplete;
-                }
-                correct = this.eval("(" + answer_entered + ")==(" + this.value_map['<ans>'] + ")") ? true : false;
-                break;
-            case ProblemType.Literal:
-                break;
-            case ProblemType.Function:
             case ProblemType.Inline:
-                var inputElems = $('#oemathid-practice-question .oemathclass-inline-input');
-                for (var i = 0; i < inputElems.length; i++) {
-                    var inputElem = inputElems[i];
-                    answer_entered = inputElem.value.trim();
-                    if (answer_entered.length == 0) {
-                        return Answer.Incomplete;
+            case ProblemType.Function:
+            case ProblemType.InlineFunction:
+                {
+                    var inputElems = $('#oemathid-practice-question input[index]');
+                    for (var i = 0; i < inputElems.length; i++) {
+                        var inputElem = inputElems[i];
+                        if (inputElem.style.visibility != 'hidden') {
+                            answer_entered = inputElem.value.trim();
+                            if (answer_entered.length == 0) {
+                                return Answer.Incomplete;
+                            }
+                        }
                     }
-                }
-                for (var i = 0; i < inputElems.length; i++) {
-                    var inputElem = inputElems[i];
-                    answer_entered = inputElem.value;
-                    answer_expected = inputElem.getAttribute("expected");
-                    if (!this.eval("(" + answer_entered + ")==(" + answer_expected + ")")) {
-                        correct = false;
-                        break;
+                    if (this.type == ProblemType.Normal) {
+                        answer_entered = $("#oemathid-answer-input-0").val().trim();
+                        correct = this.evalLiteral("" + answer_entered, "" + this.value_map['<ans>']) ? true : false;
+                    }
+                    else if (this.type == ProblemType.Function) {
+                        var expression = 'var i0 = ' + $("#oemathid-answer-input-0").val().trim() + "; var ans=i0; ";
+                        correct = this.eval(expression) ? true : false;
+                    }
+                    else if (this.type == ProblemType.Inline) {
+                        for (var i = 0; i < inputElems.length; i++) {
+                            var inputElem = inputElems[i];
+                            if (inputElem.style.visibility != 'hidden') {
+                                answer_entered = inputElem.value;
+                                answer_expected = inputElem.getAttribute("expected").trim();
+                                if (answer_entered != answer_expected) {
+                                    correct = false;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    else if (this.type == ProblemType.InlineFunction) {
+                        var expression = "";
+                        for (var i = 0; i < inputElems.length; i++) {
+                            var inputElem = inputElems[i];
+                            var idx = parseInt(inputElem.getAttribute('index'));
+                            expression += ("var i" + idx + " = ") + practice.problem().entered[i] + "; ";
+                        }
+                        expression += "" + this.value_map['<ans>'];
+                        correct = this.eval(expression) ? true : false;
                     }
                 }
                 break;
-            case ProblemType.InlineLiteral:
-            case ProblemType.InlineFunction:
         }
         this.status = correct ? Answer.Correct : Answer.Wrong;
         if (this.reportStatus != Answer.Wrong) {
@@ -439,7 +497,7 @@ var Problem = (function () {
             "<div id=\"oemathid-question-html\"><hr/><h1 class=\"oemathclass-practice-title\">Question</h1><div id=\"oemathid-practice-question\" class=\"oemathclass-practice-question " + (this.flag == 1 ? "oemathclass-mathjax" : "") + "\">" + this.question + "</div><div class=\"form-inline\" style=\"width:100%\">";
         this.htmlSubmit = "<button id=\"oemathid-practice-submit\" class=\"oemathclass-practice-button oemathclass-button btn\" onclick=\"onclickSubmit()\">Submit</button>";
         this.htmlShowAnswer = "<button id=\"oemathid-practice-show-answer\" class=\"oemathclass-practice-button oemathclass-button btn width200\" onclick=\"onclickShowAnswer()\">Show Correct Answer</button>";
-        if (this.type == ProblemType.Normal || this.type == ProblemType.Literal || this.type == ProblemType.Function) {
+        if (this.type == ProblemType.Normal || this.type == ProblemType.Function) {
             var answerHint = this.value_map['<ans_hint>'];
             if (!answerHint)
                 answerHint = this.value_map['<ans>'];
@@ -487,6 +545,7 @@ var Problem = (function () {
             html += this.htmlFinishReview;
         }
         html += this.htmlClosing;
+        //html = "<p id='xxxtestxxx'>HELLO!!!</p>" + html;
         $(id).empty().append(html);
         MathJax.Hub.Queue(["Typeset", MathJax.Hub, ".oemathclass-mathjax"], function () { $('.oemathclass-mathjax').css("visibility", "visible"); });
         this.fillEntered(this.entered);
@@ -497,6 +556,7 @@ var Problem = (function () {
             $("#oemathid-question-html .oemathclass-input").prop("disabled", true);
             $(".oemathclass-question-form input").prop("disabled", true);
         }
+        //        $("#xxxtestxxx").text("Hello, world!!");
     };
     Problem.prototype.process = function () {
         this.parseParameterMap();
@@ -549,10 +609,27 @@ function onInputChange(elem) {
             checked_marks.push(element.getAttribute('choiceindex'));
         }
         content += checked_marks.join(',');
+        practice.problem().entered[parseInt(elem.getAttribute('index'))] = content;
     }
     else if ("INPUT" == elem.tagName.toUpperCase()) {
         content += elem.value;
+        var problem = practice.problem();
+        problem.entered[parseInt(elem.getAttribute('index'))] = content;
+        if (problem.type == ProblemType.Inline || problem.type == ProblemType.InlineFunction) {
+            //$("#xxxtestxxx").text("changed c:" + content);
+            //            var v = content;
+            //          var ch = v.charAt(v.length - 1); // limit one digit in the input
+            var ph = elem.getAttribute('placeholder');
+            //$("#xxxtestxxx").text("changed p:" + ph);
+            if (('A' <= ph && ph <= 'Z') || ('a' <= ph && ph <= 'z')) {
+                //                $("#xxxtestxxx").text("changed d:" + ch);
+                //                $('input.oemathclass-inline-input[placeholder="' + ph + '"]').val(ch);
+                $('input.oemathclass-inline-input[placeholder="' + ph + '"]').each(function (index) {
+                    $(this).val(content);
+                    problem.entered[parseInt($(this).attr('index'))] = content;
+                });
+            }
+        }
     }
-    practice.problem().entered[parseInt(elem.getAttribute('index'))] = content;
 }
 //# sourceMappingURL=problem.js.map
