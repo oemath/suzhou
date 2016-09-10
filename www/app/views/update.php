@@ -7,12 +7,6 @@
     <!-- link href="/css/oemath.css" rel="stylesheet" type="text/css" media="screen" /-->
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" type="text/css" media="screen" />
 
-    <script src="http://threejs.org/build/three.js"></script>
-    <script src="http://threejs.org/examples/js/controls/OrbitControls.js"></script>
-    <script src="http://threejs.org/examples/js/controls/TrackballControls.js"></script>
-
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
     <link href="/css/practice.css" rel="stylesheet" type="text/css" />
     
     <style>
@@ -101,13 +95,37 @@
 		}
 		
     </style>
-<script type="text/javascript"
-  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
-</script>
     
 </head>
 
 <body>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+    <script>window.jQuery || document.write('<script src="/local/jquery.min.js"><\/script>')</script>
+
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+	<script>if(typeof($.fn.modal) === 'undefined') {document.write('<script src="/local/bootstrap.min.js"><\/script>')}</script>
+    <script>
+      $(document).ready(function() {
+      var bodyColor = $('body').css('color');
+      if(bodyColor != 'rgb(51, 51, 51)') {
+      $("head").prepend('<link rel="stylesheet" href="/local/bootstrap.min.css">');}});
+    </script>
+    {% if practice_css %}
+    	<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    {% endif %}
+
+<script type="text/javascript"
+  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+	<script>if(typeof(MathJax) === 'undefined') {document.write('<script src="/local/MathJax.js?config=TeX-AMS-MML_HTMLorMML"><\/script>')}</script>
+
+    <script src="http://threejs.org/build/three.js"></script>
+    <script src="http://threejs.org/examples/js/controls/OrbitControls.js"></script>
+    <script src="http://threejs.org/examples/js/controls/TrackballControls.js"></script>
+
+
+
     <script>
         var Phase;
         (function (Phase) {
@@ -601,7 +619,9 @@
 
 		    $('#preview-container').mousemove(function(e){
 			    var p = $('#oemath-canvas1').offset();
-		    	$("#prob-info").text((event.pageX-p.left) + ", " + (event.pageY-p.top));
+			    if(typeof(p) !== 'undefined') {
+		    	    $("#prob-info").text((event.pageX-p.left) + ", " + (event.pageY-p.top));
+			    }
 		    });
 		});
 		
