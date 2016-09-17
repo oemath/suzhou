@@ -4,14 +4,18 @@
         return ((Math.random() * 100000000) % n) >> 0;
     }
 
-    export function shuffle(a) {
+    export function shuffle(a, len: number) {
         let j, x, i;
-        for (i = a.length; i; i -= 1) {
+        for (i = len; i; i -= 1) {
             j = Math.floor(Math.random() * i);
             x = a[i - 1];
             a[i - 1] = a[j];
             a[j] = x;
         }
+    }
+
+    export function shuffle2(a) {
+        shuffle(a, a.length);
     }
 
     export function gcd_(x: number, y: number): number {
@@ -84,6 +88,19 @@
         return P(n, m) / F(m);
     }
 
+    // last digit of a^n
+    export function ones(a: number, n: number): number {
+        if (n == 0) return 1;
+        if (a == 0 || a==1 || a==5 || a==6) return a;
+        if (a == 2) return [6, 2, 4, 8][n % 4];
+        if (a == 3) return [1, 3, 9, 7][n % 4];
+        if (a == 4) return [6, 4][n % 2];
+        if (a == 7) return [1, 7, 9, 3][n % 4];
+        if (a == 8) return [6, 8, 4, 2][n % 4];
+        if (a == 9) return [1, 9][n % 2];
+        return 0;
+    }
+
 
     // Number
     export function num(...args: number[]): number {
@@ -94,6 +111,19 @@
         return n;
     }
 
+    // a: 0-9; 0->zero, 1->one, ...
+    export function dstr(a: number): string {
+        if (0 <= a && a <= 9) {
+            return ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'][a];
+        }
+    }
+
+    // a: 0-9; 0->Zero, 1->One, ...
+    export function Dstr(a: number): string {
+        if (0 <= a && a <= 9) {
+            return ['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'][a];
+        }
+    }
 
     export function cos(x: number): number {
         return Math.cos(x * Math.PI / 180);
@@ -123,5 +153,26 @@
         if (b < 0) { pos = 1 - pos; b = -b; }
         var g: number = gcd(a, b);
         return '{' + ['-', ''][pos] + (b == g ? a / g : (a / g + " \\over " + b / g)) + '}';
+    }
+
+    export function weekday(a: number): string {
+        if (0 <= a && a <= 6) {
+            return ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][a];
+        }
+        return '';
+    }
+
+    export function month(a: number): string {
+        if (1 <= a && a <= 12) {
+            return ['January', 'Feburary', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'Novermber', 'December'][a-1];
+        }
+        return '';
+    }
+
+    export function month_abbr(a: number): string {
+        if (1 <= a && a <= 12) {
+            return ['Jan.', 'Feb.', 'Mar.', 'Apr.', 'May', 'Jun.', 'Jul.', 'Aug.', 'Sept.', 'Oct.', 'Nov.', 'Dec.'][a-1];
+        }
+        return '';
     }
 };

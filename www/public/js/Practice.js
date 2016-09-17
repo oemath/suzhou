@@ -167,7 +167,7 @@ var Practice = (function () {
     Practice.prototype.onclickFinishReview = function () {
     };
     return Practice;
-})();
+}());
 var practice = new Practice(grade, category, count, token);
 $(function () {
     $(document).keypress(function (e) {
@@ -182,4 +182,4 @@ $(function () {
         practice.showProblem(problem);
     }
 });
-//# sourceMappingURL=practice.js.map
+//# sourceMappingURL=Practice.js.map

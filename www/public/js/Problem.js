@@ -46,7 +46,7 @@ var SvgCircle = (function () {
         this.r = r;
     }
     return SvgCircle;
-})();
+}());
 var Point = (function () {
     function Point(x, y, polar) {
         if (x === void 0) { x = 0; }
@@ -57,9 +57,24 @@ var Point = (function () {
         this.polar = polar;
     }
     return Point;
-})();
+}());
 var Problem = (function () {
     function Problem(prob, index) {
+        this.abbrs = {
+            'bbans': '<br><br><ans>',
+            'bbcenter': '<br><br><center>',
+            'ospan': '<span style="text-decoration:overline">',
+            'bb': '<br><br>',
+            'rf': '  <b>Express your answer as a reduced fraction.</b>',
+            'dec': '  <b>Express your answer to the nearest integer.</b>',
+            'dec1': '  <b>Express your answer as a decimal to the nearest tenth.</b>',
+            'dec2': '  <b>Express your answer as a decimal to the nearest hundredth.</b>',
+            'dec3': '  <b>Express your answer as a decimal to the nearest thousandth.</b>',
+            'per': '  <b>Express your answer to the nearest whole percent.</b>',
+            'per1': '  <b>Express your answer to the nearest tenth of a percent.</b>',
+            'per2': '  <b>Express your answer to the nearest hundredth of a percent.</b>',
+            'sci': '  <b>Express your answer in scientific notation.</b>',
+        };
         this.index = index;
         this.type = prob.type;
         this.level = prob.level;
@@ -129,8 +144,8 @@ var Problem = (function () {
     };
     Problem.prototype.parseParameterMap = function () {
         var parameter_list = this.splitParameter();
-        for (var _i = 0; _i < parameter_list.length; _i++) {
-            var parameter = parameter_list[_i];
+        for (var _i = 0, parameter_list_1 = parameter_list; _i < parameter_list_1.length; _i++) {
+            var parameter = parameter_list_1[_i];
             var name_1 = 'ans';
             var value = parameter.trim();
             var eql = parameter.indexOf('=');
@@ -298,15 +313,19 @@ var Problem = (function () {
     Problem.prototype.replaceOemathTags = function (question, index) {
         //<canvas#(<w>,<h>)></canvas>
         question = question.replace(/<\s*canvas(\d*)\s*\(\s*(\d+)\s*,\s*(\d+)\)\s*>(.*?)<\s*\/canvas\s*>/g, function (m, $1, $2, $3, $4) {
-            return "<div id='oemath-canvas-div" + $1 + "' style='position:relative;width:" + $2 + "px;height:" + $3 + "px'><canvas id='oemath-canvas" + $1 + "' width='" + $2 + "' height='" + $3 + "'>" + $4 + "<\/canvas><\/div>";
+            var cw = parseInt($2) + 100;
+            var ch = parseInt($3) + 100;
+            return "<div id='oemath-canvas-div" + $1 + "' style='position:relative;width:" + cw + "px;height:" + ch + "px'><canvas id='oemath-canvas" + $1 + "' width='" + cw + "' height='" + ch + "'>" + $4 + "</canvas></div>";
         });
         //<canvas#(<w>,<h>)></canvas>
         question = question.replace(/<\s*center-canvas(\d*)\s*\(\s*(\d+)\s*,\s*(\d+)\)\s*>(.*?)<\s*\/canvas\s*>/g, function (m, $1, $2, $3, $4) {
-            return "<div id='oemath-canvas-div" + $1 + "' style='display:block;margin:auto;position:relative;width:" + $2 + "px;height:" + $3 + "px'><canvas id='oemath-canvas" + $1 + "' width='" + $2 + "' height='" + $3 + "'>" + $4 + "<\/canvas><\/div>";
+            var cw = parseInt($2) + 100;
+            var ch = parseInt($3) + 100;
+            return "<div id='oemath-canvas-div" + $1 + "' style='display:block;margin:auto;position:relative;width:" + cw + "px;height:" + ch + "px'><canvas id='oemath-canvas" + $1 + "' width='" + cw + "' height='" + ch + "'>" + $4 + "</canvas></div>";
         });
         //<script-canvas#>
-        question = question.replace(/<\s*script-canvas(\d*)\s*>/, function (m, $1) {
-            return "<script>var ctx = document.getElementById('oemath-canvas" + $1 + "').getContext('2d'); ctx.lineWidth = 1; ctx.strokeStyle = 'black'; ctx.fillStyle = 'rgba(128,128,128,1)'; ctx.font = '20px Arial';";
+        question = question.replace(/<\s*script-canvas(\d*)\s*>/g, function (m, $1) {
+            return "<script>var ctx = document.getElementById('oemath-canvas" + $1 + "').getContext('2d'); ctx.lineWidth = 1; ctx.strokeStyle = '#000000'; ctx.fillStyle = 'rgba(128,128,128,1)'; ctx.font = '20px Arial'; ctx.translate(50,50);";
         });
         //<input[#](expected[,placeholder,width,x,y])>
         /* define css style for class: oemathclass-inline-input
@@ -363,28 +382,71 @@ var Problem = (function () {
         else if (this.type == ProblemType.Radio) {
             var options = answer.split(';;');
             var index_1 = new Array(options.length);
-            for (var i = 0; i < options.length; i++)
-                index_1[i] = i;
-            oe.shuffle(index_1);
+            var maxRandom = 0;
+            var fixed = new Array(options.length);
+            var maxFixed = -1;
+            for (var i = 0; i < options.length; i++) {
+                var off = options[i].search(/^\s*##/);
+                if (off != -1) {
+                    var j = 0;
+                    if (options[i].length > (off + 2) && '0' <= options[i][off + 2] && options[i][off + 2] <= '9') {
+                        j = parseInt(options[i][off + 2]);
+                        ++off;
+                    }
+                    if (j < options.length) {
+                        fixed[j] = i;
+                        maxFixed = maxFixed > j ? maxFixed : j;
+                        options[i] = options[i].substr(off + 2).trim();
+                        continue;
+                    }
+                }
+                index_1[maxRandom++] = i;
+            }
+            oe.shuffle(index_1, maxRandom);
+            for (var i = maxFixed; i >= 0; i--) {
+                index_1[maxRandom++] = fixed[i];
+            }
             for (var idx = 0; idx < index_1.length; idx++) {
-                var i_1 = index_1[idx];
-                var expected = i_1 == 0 ? 1 : 0;
-                answer_html += ("<div expected='" + expected + "'><input type='radio' choiceindex='" + idx + "' name='oemath-question-radio' id='oemath-choice-" + i_1 + "' class='oemathclass-question-choice' expected='" + expected + "'>") +
-                    ("<label for='oemath-choice-" + i_1 + "' class='oemathclass-question-choice-label'>" + options[i_1].trim() + "</label></div >");
+                var i = index_1[idx];
+                var expected = i == 0 ? 1 : 0;
+                answer_html += ("<div expected='" + expected + "'><input type='radio' choiceindex='" + idx + "' name='oemath-question-radio' id='oemath-choice-" + i + "' class='oemathclass-question-choice' expected='" + expected + "'>") +
+                    ("<label for='oemath-choice-" + i + "' class='oemathclass-question-choice-label'>" + options[i].trim() + "</label></div >");
             }
         }
         else if (this.type == ProblemType.Checkbox) {
             var options = answer.split(';;');
             var corrects = parseInt(options[0]);
             var index_2 = new Array(options.length - 1);
-            for (var i = 1; i < options.length; i++)
-                index_2[i - 1] = i - 1;
-            oe.shuffle(index_2);
+            var maxRandom = 0;
+            var fixed = new Array(options.length - 1);
+            var maxFixed = -1;
+            //            for (var i = 1; i < options.length; i++) index[i-1] = i-1;
+            for (var i = 1; i < options.length; i++) {
+                var off = options[i].search(/^\s*##/);
+                if (off != -1) {
+                    var j = 0;
+                    if (options[i].length > (off + 2) && '0' <= options[i][off + 2] && options[i][off + 2] <= '9') {
+                        j = parseInt(options[i][off + 2]);
+                        ++off;
+                    }
+                    if (j < options.length) {
+                        fixed[j] = i - 1;
+                        maxFixed = maxFixed > j ? maxFixed : j;
+                        options[i] = options[i].substr(off + 2).trim();
+                        continue;
+                    }
+                }
+                index_2[maxRandom++] = i - 1;
+            }
+            oe.shuffle(index_2, maxRandom);
+            for (var i = maxFixed; i >= 0; i--) {
+                index_2[maxRandom++] = fixed[i];
+            }
             for (var idx = 0; idx < index_2.length; idx++) {
-                var i_2 = index_2[idx];
-                var expected = i_2 < corrects ? 1 : 0;
-                answer_html += ("<div expected='" + expected + "'><input type='checkbox' choiceindex='" + idx + "' name='oemath-question-checkbox' id='oemath-choice-" + i_2 + "' class='oemathclass-question-choice' expected='" + expected + "'>") +
-                    ("<label for='oemath-choice-" + i_2 + "' class='oemathclass-question-choice-label'>" + options[i_2 + 1].trim() + "</label></div >");
+                var i = index_2[idx];
+                var expected = i < corrects ? 1 : 0;
+                answer_html += ("<div expected='" + expected + "'><input type='checkbox' choiceindex='" + idx + "' name='oemath-question-checkbox' id='oemath-choice-" + i + "' class='oemathclass-question-choice' expected='" + expected + "'>") +
+                    ("<label for='oemath-choice-" + i + "' class='oemathclass-question-choice-label'>" + options[i + 1].trim() + "</label></div >");
             }
         }
         answer_html += "<\/form>";
@@ -421,17 +483,17 @@ var Problem = (function () {
             case ProblemType.TrueFalse:
             case ProblemType.Radio:
             case ProblemType.Checkbox:
-                var entered = false;
+                var entered_1 = false;
                 $('.oemathclass-question-choice').each(function (index) {
                     var expected = $(this).attr('expected');
                     var checked = $(this).is(':checked');
                     if (checked)
-                        entered = true;
+                        entered_1 = true;
                     if ((expected == '1' && !checked) || (expected == '0' && checked)) {
                         correct = false;
                     }
                 });
-                if (!entered)
+                if (!entered_1)
                     return Answer.Incomplete;
                 break;
             case ProblemType.Normal:
@@ -455,6 +517,7 @@ var Problem = (function () {
                     }
                     else if (this.type == ProblemType.Function) {
                         var expression = 'var i0 = ' + $("#oemathid-answer-input-0").val().trim() + "; var ans=i0; ";
+                        expression += "" + this.value_map['<ans>'];
                         correct = this.eval(expression) ? true : false;
                     }
                     else if (this.type == ProblemType.Inline) {
@@ -558,7 +621,28 @@ var Problem = (function () {
         }
         //        $("#xxxtestxxx").text("Hello, world!!");
     };
+    Problem.prototype.preprocess = function () {
+        var question = this.question;
+        var parameter = this.parameter;
+        var hint = this.hint;
+        // replace reservered keyword <.xxx> in question and hint
+        $.each(this.abbrs, function (k, v) {
+            if (question != null) {
+                question = question.replace(new RegExp("<." + k + ">", "g"), v);
+            }
+            if (parameter != null) {
+                parameter = parameter.replace(new RegExp("<." + k + ">", "g"), v);
+            }
+            if (hint != null) {
+                hint = hint.replace(new RegExp("<." + k + ">", "g"), v);
+            }
+        });
+        this.question = question;
+        this.parameter = parameter;
+        this.hint = hint;
+    };
     Problem.prototype.process = function () {
+        this.preprocess(); // replace abbr. like <.bb> in question, parameter and hint.
         this.parseParameterMap();
         this.parameter = this.replaceKnownParameters(this.parameter);
         this.parameter = this.replaceOemathTags(this.parameter, this.index);
@@ -571,7 +655,7 @@ var Problem = (function () {
         return true;
     };
     return Problem;
-})();
+}());
 function onclickSubmit() { practice.onclickSubmit(); }
 function onclickSkip() { practice.onclickSkip(); }
 function onclickStartReview() { practice.onclickStartReview(); }
@@ -613,9 +697,9 @@ function onInputChange(elem) {
     }
     else if ("INPUT" == elem.tagName.toUpperCase()) {
         content += elem.value;
-        var problem = practice.problem();
-        problem.entered[parseInt(elem.getAttribute('index'))] = content;
-        if (problem.type == ProblemType.Inline || problem.type == ProblemType.InlineFunction) {
+        var problem_1 = practice.problem();
+        problem_1.entered[parseInt(elem.getAttribute('index'))] = content;
+        if (problem_1.type == ProblemType.Inline || problem_1.type == ProblemType.InlineFunction) {
             //$("#xxxtestxxx").text("changed c:" + content);
             //            var v = content;
             //          var ch = v.charAt(v.length - 1); // limit one digit in the input
@@ -626,10 +710,10 @@ function onInputChange(elem) {
                 //                $('input.oemathclass-inline-input[placeholder="' + ph + '"]').val(ch);
                 $('input.oemathclass-inline-input[placeholder="' + ph + '"]').each(function (index) {
                     $(this).val(content);
-                    problem.entered[parseInt($(this).attr('index'))] = content;
+                    problem_1.entered[parseInt($(this).attr('index'))] = content;
                 });
             }
         }
     }
 }
-//# sourceMappingURL=problem.js.map
+//# sourceMappingURL=Problem.js.map

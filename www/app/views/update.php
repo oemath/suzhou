@@ -268,6 +268,7 @@
 			}
 			$('#prob-pid').val((pid_list[curr_pid_index-1]));
 			on_pid_change(pid_list[curr_pid_index-1]);
+			$('#prob-param').focus();
 //			retrieve_and_show('prev');
 		}
 		function onclickGet() {
@@ -279,6 +280,7 @@
 			}
 			$('#prob-pid').val((pid_list[curr_pid_index+1]));
 			on_pid_change(pid_list[curr_pid_index+1]);
+			$('#prob-param').focus();
 //			retrieve_and_show('next');
 		}
 
@@ -296,7 +298,8 @@
 			$('#prob-pid').append('<option value="'+pid+'">'+ pid+'</option>')
 			$('#prob-pid').val(pid);
 			$('#prob-type').val(0);
-			$('#prob-problem').val('');
+			$('#prob-flag').val(0);
+			$('#prob-problem').val('').focus();
 			$('#prob-param').val('');
 			$('#prob-hint').val('');
 			curr_pid = pid;
@@ -369,7 +372,7 @@
 
             $('.oemathclass-input').each(function (index) {
                 if ("FORM" == $(this).prop('tagName').toUpperCase()) {
-                    $(`#${$(this).attr('id')} input.oemathclass-question-choice`).each(function (index) {
+                    $('#'+$(this).attr('id')+' input.oemathclass-question-choice').each(function (index) {
                         $(this).prop('checked', $(this).attr('expected') == '1' ? true : false);
                     });
                 }
@@ -454,10 +457,12 @@
 		{
 			pid_list = [];
 			opts = '';
-			for (var i=0; i<pids.length; i++) {
-				var pid = pids[i];
-				opts += '<option value="'+pid+'">'+ pid+'</option>';
-				pid_list.push(pid);
+			if (pids != null) {
+				for (var i=0; i<pids.length; i++) {
+					var pid = pids[i];
+					opts += '<option value="'+pid+'">'+ pid+'</option>';
+					pid_list.push(pid);
+				}
 			}
 
 			$('#prob-pid').empty();

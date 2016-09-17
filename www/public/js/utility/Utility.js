@@ -4,9 +4,9 @@ var oe;
         return ((Math.random() * 100000000) % n) >> 0;
     }
     oe.rand = rand;
-    function shuffle(a) {
+    function shuffle(a, len) {
         var j, x, i;
-        for (i = a.length; i; i -= 1) {
+        for (i = len; i; i -= 1) {
             j = Math.floor(Math.random() * i);
             x = a[i - 1];
             a[i - 1] = a[j];
@@ -14,6 +14,10 @@ var oe;
         }
     }
     oe.shuffle = shuffle;
+    function shuffle2(a) {
+        shuffle(a, a.length);
+    }
+    oe.shuffle2 = shuffle2;
     function gcd_(x, y) {
         if (y === undefined)
             return x;
@@ -100,6 +104,27 @@ var oe;
         return P(n, m) / F(m);
     }
     oe.C = C;
+    // last digit of a^n
+    function ones(a, n) {
+        if (n == 0)
+            return 1;
+        if (a == 0 || a == 1 || a == 5 || a == 6)
+            return a;
+        if (a == 2)
+            return [6, 2, 4, 8][n % 4];
+        if (a == 3)
+            return [1, 3, 9, 7][n % 4];
+        if (a == 4)
+            return [6, 4][n % 2];
+        if (a == 7)
+            return [1, 7, 9, 3][n % 4];
+        if (a == 8)
+            return [6, 8, 4, 2][n % 4];
+        if (a == 9)
+            return [1, 9][n % 2];
+        return 0;
+    }
+    oe.ones = ones;
     // Number
     function num() {
         var args = [];
@@ -113,6 +138,20 @@ var oe;
         return n;
     }
     oe.num = num;
+    // a: 0-9; 0->zero, 1->one, ...
+    function dstr(a) {
+        if (0 <= a && a <= 9) {
+            return ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'][a];
+        }
+    }
+    oe.dstr = dstr;
+    // a: 0-9; 0->Zero, 1->One, ...
+    function Dstr(a) {
+        if (0 <= a && a <= 9) {
+            return ['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'][a];
+        }
+    }
+    oe.Dstr = Dstr;
     function cos(x) {
         return Math.cos(x * Math.PI / 180);
     }
@@ -155,6 +194,27 @@ var oe;
         return '{' + ['-', ''][pos] + (b == g ? a / g : (a / g + " \\over " + b / g)) + '}';
     }
     oe.rfm = rfm;
+    function weekday(a) {
+        if (0 <= a && a <= 6) {
+            return ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][a];
+        }
+        return '';
+    }
+    oe.weekday = weekday;
+    function month(a) {
+        if (1 <= a && a <= 12) {
+            return ['January', 'Feburary', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'Novermber', 'December'][a - 1];
+        }
+        return '';
+    }
+    oe.month = month;
+    function month_abbr(a) {
+        if (1 <= a && a <= 12) {
+            return ['Jan.', 'Feb.', 'Mar.', 'Apr.', 'May', 'Jun.', 'Jul.', 'Aug.', 'Sept.', 'Oct.', 'Nov.', 'Dec.'][a - 1];
+        }
+        return '';
+    }
+    oe.month_abbr = month_abbr;
 })(oe || (oe = {}));
 ;
-//# sourceMappingURL=utility.js.map
+//# sourceMappingURL=Utility.js.map

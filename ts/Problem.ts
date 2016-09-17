@@ -109,6 +109,22 @@ class Problem {
     // helper
     ///////////
     private value_map: { [key:string]: string };
+    private abbrs: { [key: string]: string } = {
+        'bbans': '<br><br><ans>',
+        'bbcenter': '<br><br><center>',
+        'ospan': '<span style="text-decoration:overline">',
+        'bb': '<br><br>',
+        'rf': '  <b>Express your answer as a reduced fraction.</b>',
+        'dec': '  <b>Express your answer to the nearest integer.</b>',
+        'dec1': '  <b>Express your answer as a decimal to the nearest tenth.</b>',
+        'dec2': '  <b>Express your answer as a decimal to the nearest hundredth.</b>',
+        'dec3': '  <b>Express your answer as a decimal to the nearest thousandth.</b>',
+        'per': '  <b>Express your answer to the nearest whole percent.</b>',
+        'per1': '  <b>Express your answer to the nearest tenth of a percent.</b>',
+        'per2': '  <b>Express your answer to the nearest hundredth of a percent.</b>',
+        'sci': '  <b>Express your answer in scientific notation.</b>',
+    };
+
 
     public constructor(prob: any, index: number) {
         this.index = index;
@@ -376,17 +392,21 @@ class Problem {
     private replaceOemathTags(question: string, index: number): string {
         //<canvas#(<w>,<h>)></canvas>
         question = question.replace(/<\s*canvas(\d*)\s*\(\s*(\d+)\s*,\s*(\d+)\)\s*>(.*?)<\s*\/canvas\s*>/g, function (m, $1, $2, $3, $4) {
-            return "<div id='oemath-canvas-div" + $1 + "' style='position:relative;width:" + $2 + "px;height:" + $3 + "px'><canvas id='oemath-canvas" + $1 + "' width='" + $2 + "' height='" + $3 + "'>" + $4 + "<\/canvas><\/div>";
+            let cw: number = parseInt($2) + 100;
+            let ch: number = parseInt($3) + 100;
+            return `<div id='oemath-canvas-div${$1}' style='position:relative;width:${cw}px;height:${ch}px'><canvas id='oemath-canvas${$1}' width='${cw}' height='${ch}'>${$4}<\/canvas><\/div>`;
         });
 
         //<canvas#(<w>,<h>)></canvas>
         question = question.replace(/<\s*center-canvas(\d*)\s*\(\s*(\d+)\s*,\s*(\d+)\)\s*>(.*?)<\s*\/canvas\s*>/g, function (m, $1, $2, $3, $4) {
-            return "<div id='oemath-canvas-div" + $1 + "' style='display:block;margin:auto;position:relative;width:" + $2 + "px;height:" + $3 + "px'><canvas id='oemath-canvas" + $1 + "' width='" + $2 + "' height='" + $3 + "'>" + $4 + "<\/canvas><\/div>";
+            let cw: number = parseInt($2) + 100;
+            let ch: number = parseInt($3) + 100;
+            return `<div id='oemath-canvas-div${$1}' style='display:block;margin:auto;position:relative;width:${cw}px;height:${ch}px'><canvas id='oemath-canvas${$1}' width='${cw}' height='${ch}'>${$4}<\/canvas><\/div>`;
         });
 
         //<script-canvas#>
-        question = question.replace(/<\s*script-canvas(\d*)\s*>/, function (m, $1) {
-            return "<script>var ctx = document.getElementById('oemath-canvas" + $1 + "').getContext('2d'); ctx.lineWidth = 1; ctx.strokeStyle = 'black'; ctx.fillStyle = 'rgba(128,128,128,1)'; ctx.font = '20px Arial';";
+        question = question.replace(/<\s*script-canvas(\d*)\s*>/g, function (m, $1) {
+            return "<script>var ctx = document.getElementById('oemath-canvas" + $1 + "').getContext('2d'); ctx.lineWidth = 1; ctx.strokeStyle = '#000000'; ctx.fillStyle = 'rgba(128,128,128,1)'; ctx.font = '20px Arial'; ctx.translate(50,50);";
         });
 
         //<input[#](expected[,placeholder,width,x,y])>
@@ -438,8 +458,32 @@ class Problem {
         else if (this.type == ProblemType.Radio) {
             let options: string[] = answer.split(';;');
             let index = new Array(options.length);
-            for (var i = 0; i < options.length; i++) index[i] = i;
-            oe.shuffle(index);
+            let maxRandom: number = 0;
+            let fixed = new Array(options.length);
+            let maxFixed: number = -1;
+            for (let i = 0; i < options.length; i++) {
+                let off = options[i].search(/^\s*##/);
+                if (off != -1) {
+                    let j: number = 0;
+                    if (options[i].length > (off + 2) && '0' <= options[i][off + 2] && options[i][off + 2] <= '9') {
+                        j = parseInt(options[i][off + 2]);
+                        ++off;
+                    }
+                    if (j < options.length) {
+                        fixed[j] = i;
+                        maxFixed = maxFixed > j ? maxFixed : j;
+                        options[i] = options[i].substr(off + 2).trim();
+                        continue;
+                    }
+                }
+
+                index[maxRandom++] = i;
+            }
+            oe.shuffle(index, maxRandom);
+            for (let i = maxFixed; i >= 0; i--) {
+                index[maxRandom++] = fixed[i];
+            }
+
             for (let idx = 0; idx < index.length; idx++) {
                 let i = index[idx];
                 let expected: number = i == 0 ? 1 : 0;
@@ -451,8 +495,34 @@ class Problem {
             let options: string[] = answer.split(';;');
             let corrects: number = parseInt(options[0]);
             let index = new Array(options.length - 1);
-            for (var i = 1; i < options.length; i++) index[i-1] = i-1;
-            oe.shuffle(index);
+            let maxRandom: number = 0;
+            let fixed = new Array(options.length - 1);
+            let maxFixed: number = -1;
+//            for (var i = 1; i < options.length; i++) index[i-1] = i-1;
+
+            for (let i = 1; i < options.length; i++) {
+                let off = options[i].search(/^\s*##/);
+                if (off != -1) {
+                    let j: number = 0;
+                    if (options[i].length > (off + 2) && '0' <= options[i][off + 2] && options[i][off + 2] <= '9') {
+                        j = parseInt(options[i][off + 2]);
+                        ++off;
+                    }
+                    if (j < options.length) {
+                        fixed[j] = i-1;
+                        maxFixed = maxFixed > j ? maxFixed : j;
+                        options[i] = options[i].substr(off + 2).trim();
+                        continue;
+                    }
+                }
+
+                index[maxRandom++] = i-1;
+            }
+            oe.shuffle(index, maxRandom);
+            for (let i = maxFixed; i >= 0; i--) {
+                index[maxRandom++] = fixed[i];
+            }
+
             for (let idx = 0; idx < index.length; idx++) {
                 let i = index[idx];
                 let expected: number = i < corrects ? 1 : 0;
@@ -535,6 +605,7 @@ class Problem {
                 }
                 else if (this.type == ProblemType.Function) {
                     let expression: string = 'var i0 = ' + $("#oemathid-answer-input-0").val().trim() + "; var ans=i0; ";
+                    expression += `${this.value_map['<ans>']}`;
                     correct = this.eval(expression) ? true : false;
                 }
                 else if (this.type == ProblemType.Inline) {
@@ -655,7 +726,30 @@ class Problem {
 //        $("#xxxtestxxx").text("Hello, world!!");
     }
 
+    private preprocess(): void {
+        let question: string = this.question;
+        let parameter: string = this.parameter;
+        let hint: string = this.hint;
+        // replace reservered keyword <.xxx> in question and hint
+        $.each(this.abbrs, function (k, v) {
+            if (question != null) {
+                question = question.replace(new RegExp(`<.${k}>`, "g"), v);
+            }
+            if (parameter != null) {
+                parameter = parameter.replace(new RegExp(`<.${k}>`, "g"), v);
+            }
+            if (hint != null) {
+                hint = hint.replace(new RegExp(`<.${k}>`, "g"), v);
+            }
+        });
+        this.question = question;
+        this.parameter = parameter;
+        this.hint = hint;
+    }
+
     public process(): boolean {
+        this.preprocess(); // replace abbr. like <.bb> in question, parameter and hint.
+
         this.parseParameterMap();
         this.parameter = this.replaceKnownParameters(this.parameter);
         this.parameter = this.replaceOemathTags(this.parameter, this.index);
@@ -736,6 +830,4 @@ function onInputChange(elem) {
             }
         }
     }
-
 }
-
