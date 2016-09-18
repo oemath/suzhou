@@ -4,8 +4,8 @@
 
 {% block content %}
 <div>
-<h1 style="color:green">Practice - Grade {{grade}} - {{title}}</h1>
-<div id="oemathid-reviewbtn-container">
+<h1><a href="/math?grade={{grade}}" style="color:green">Grade {{grade}}</a> - {{title}}</h1>
+<div id="oemathid-reviewbtn-container" style="margin-top:20px">
 	<div class="btn-group" role="group" aria-label="...">
 		{% for i in 0..count-1 %}
 		<button type='button' id='oemathid-reviewbtn-{{i}}' class='btn btn-default oemathclass-reviewbtn-inactive' disabled onclick='onclickReviewBtn({{i}})'>{{i+1}}</button>
@@ -16,7 +16,7 @@
 <div id="oemathid-question-container"></div>
 <script>
 var grade = {{grade}};
-var category = {{category}};
+var category = {{cid}};
 var index = 0;
 var count = {{count}};
 var token = "{{token}}";

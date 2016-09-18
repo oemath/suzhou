@@ -217,6 +217,8 @@ class Practice {
     }
 
     public onclickFinishReview() {
+        $(window).unbind('beforeunload');
+        window.location.href = `/math?grade=${grade}`;
     }
 }
 
@@ -231,6 +233,8 @@ $(function () {
             }
         }
     });
+
+//    $(window).bind('beforeunload', function () { return 'Are you sure to finish the practice?'; });
 
     let problem: Problem = practice.ajaxNextProblem();
     if (problem) {

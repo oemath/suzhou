@@ -405,6 +405,7 @@
 			$('#prob-flag').val(data.flag);
 			$('#prob-problem').val(data.question);
 			$('#prob-param').val(data.parameter);
+			$('#prob-hint').val(data.hint);
 
 			refresh_input_to_preview();
 			

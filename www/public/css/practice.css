@@ -10,20 +10,22 @@
 }
 .oemathclass-reviewbtn-active{
 	width: 64px;
-	height: 48px;
+	height: 54px;
     text-align: middle;
     transform: translateY(-7px);
+    font-weight: bold;
+    font-size: 140%;
 }
 .oemathclass-reviewbtn-inactive{
-    width: 45px;
-    height: 34px;
+    width: 48px;
+    height: 40px;
     text-align: middle;
 }
 
 #oemathid-practice-question{
-	min-height: 480px;
+	min-height: 300px;
 	font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
-	font-size: 24px;
+	font-size: 20px;
     font-weight: normal;
 }
 
@@ -61,4 +63,19 @@
 	border: 0px;
     width: 20px;
     height: 20px;
+}
+
+
+#oemathid-hintmodal{
+	width: 700px;
+}
+
+#oemathid-hintmodal-tabcontent{
+	width: 640px;
+}
+
+#oemathid-hintmodal-body{
+	max-height: 300px;
+	overflow-x: hidden;
+	overflow-y: auto;
 }

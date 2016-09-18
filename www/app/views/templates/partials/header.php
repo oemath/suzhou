@@ -1,4 +1,4 @@
-<div id="oemathid-header-left"><p>oemath - Sharpen Your Brain</p></div>
+<div id="oemathid-header-left"><p>oemath - Build for Math Contest</p></div>
 <div id="oemathid-header-right">
 {% if auth %}
 	<form action="{{urlFor('logout')}}">

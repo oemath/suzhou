@@ -53,7 +53,6 @@ class Problem
                      where id >= {$first_id} 
                      order by id asc 
                      limit {$count}");
-            
             if (count($problems) < $count) {
                 $count_from_start = $count - count($problems); 
                 $problems_from_start = DB::select(
@@ -75,7 +74,8 @@ class Problem
             return array_map(function($a) { return $a->id; }, $problems);
         }
         catch ( \Illuminate\Database\QueryException $e) {
-            return null;
+var_dump($e);            
+        	return null;
         }        
     }
     

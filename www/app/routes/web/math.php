@@ -14,4 +14,4 @@ $app->get('/math', function() use ($app) {
             'grade' => $grade,
             'category' => $category,
     ]);
-});
+})->name('math');

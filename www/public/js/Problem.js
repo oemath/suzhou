@@ -92,6 +92,8 @@ var Problem = (function () {
         return this.parameter.trim().split('$$');
     };
     Problem.prototype.replaceKnownParameters = function (str) {
+        if (str == null)
+            return null;
         $.each(this.value_map, function (k, v) {
             str = str.replace(new RegExp(k, "g"), v);
         });
@@ -310,7 +312,9 @@ var Problem = (function () {
         })(this));
         return { problem: prob, inputs: inputs };
     };
-    Problem.prototype.replaceOemathTags = function (question, index) {
+    Problem.prototype.replaceOemathTags = function (question) {
+        if (question == null)
+            return null;
         //<canvas#(<w>,<h>)></canvas>
         question = question.replace(/<\s*canvas(\d*)\s*\(\s*(\d+)\s*,\s*(\d+)\)\s*>(.*?)<\s*\/canvas\s*>/g, function (m, $1, $2, $3, $4) {
             var cw = parseInt($2) + 100;
@@ -555,9 +559,72 @@ var Problem = (function () {
         }
         return this.status;
     };
+    Problem.prototype.generateHint = function (h, idx) {
+        var hints = h.split('$$');
+        var html = "<div id='#oemathid-hinttab-" + idx + "'><p>" + hints[0] + "</p>";
+        for (var i = 1; i < hints.length; i++) {
+            html += "<div style=\"display:none\" id=\"hint" + idx + "-" + i + "\"><hr><p>" + hints[i] + "</p></div>";
+        }
+        if (hints.length > 1) {
+            html += "<a style=\"cursor:pointer\" onclick= \"onClickMoreHints(" + idx + ")\" id= 'oemathid-hintbtn" + idx + "' status= 0 last=" + (hints.length - 1) + " >Show more details</a>";
+        }
+        html += "</div>";
+        return html;
+    };
+    Problem.prototype.generateHintHtml = function () {
+        if (!this.hint)
+            return;
+        var mul_hints = this.hint.split('$$$');
+        this.htmlHint =
+            "<div class=\"modal\" id=\"oemathid-hintsModal\" role=\"dialog\"><div class=\"modal-dialog\" id=\"oemathid-hintmodal\"><div class=\"modal-content\">";
+        if (mul_hints.length == 1) {
+            this.htmlHint += "<div class=\"modal-header\"><h4 class=\"modal-title\">Hint</h4></div >            <div class=\"modal-body\">" + this.generateHint(mul_hints[0], 0);
+        }
+        else {
+            this.htmlHint += "<div class=\"modal-body\"><div class=\"container\" style=\"min-height:300px\"><div id=\"oemathid-hintmodal-tabcontent\"><ul id=\"oemathid-hint-tabs\" class=\"nav nav-tabs\" data-tabs=\"tabs\"><li class=\"active\"><a href=\"#oemathid-hinttab-0\" data-toggle=\"tab\">Hint 1</a></li>";
+            for (var i = 1; i < mul_hints.length; i++) {
+                this.htmlHint += "<li><a href=\"#oemathid-hinttab-" + i + "\" data-toggle=\"tab\">Hint " + (i + 1) + "</a></li>";
+            }
+            this.htmlHint += "</ul><div class=\"tab-content\" id=\"oemathid-hintmodal-body\"><div class=\"tab-pane active\" id=\"oemathid-hinttab-0\">" + this.generateHint(mul_hints[0], 0) + "</div>";
+            for (var i = 1; i < mul_hints.length; i++) {
+                this.htmlHint += "<div class=\"tab-pane\" id=\"oemathid-hinttab-" + i + "\">" + this.generateHint(mul_hints[i], i) + "</div>";
+            }
+            this.htmlHint += "</div></div></div>";
+        }
+        this.htmlHint +=
+            "</div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button></div></div></div></div>";
+        /*
+        let hints: string[] = this.hint.split('$$');
+
+        this.htmlHint =
+`<div class="modal" id="oemathid-hintsModal" role="dialog"><div class="modal-dialog">\
+<div class="modal-content">\
+<div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button>\
+<h4 class="modal-title">Hints</h4></div>\
+<div class="modal-body oemathclass-hintmodal">\
+<div><p>${hints[0]}</p>`;
+        for (let i: number = 1; i < hints.length; i++) {
+            this.htmlHint += `<div style="display:none" id="hint${i}"><hr><p>${hints[i]}</p></div>`;
+        }
+
+        if (hints.length > 1) {
+            this.htmlHint += `<a style="cursor:pointer" onclick= "onClickMoreHints()" id= 'oemathid-hintbtn' status= 0 last=${hints.length-1} >Show more hints</a>`;
+        }
+
+        this.htmlHint +=
+`</div></div><div class="modal-footer">\
+<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>\
+</div></div></div></div>`;*/
+    };
     Problem.prototype.generateHtmls = function () {
         this.htmlBase =
-            "<div id=\"oemathid-question-html\"><hr/><h1 class=\"oemathclass-practice-title\">Question</h1><div id=\"oemathid-practice-question\" class=\"oemathclass-practice-question " + (this.flag == 1 ? "oemathclass-mathjax" : "") + "\">" + this.question + "</div><div class=\"form-inline\" style=\"width:100%\">";
+            "<div id=\"oemathid-question-html\"><hr/><div class=\"oemathclass-practice-title\" style=\"height:60px;\"><span style=\"display:inline-block;float:left;font-size:36px;\">Question</span>";
+        if (this.hint) {
+            this.htmlBase +=
+                "<input type=\"image\" data-toggle=\"modal\" data-target=\"#oemathid-hintsModal\" style=\"display:inline-block;float:right;outline:none\" border=\"0\" title=\"Need some hint?\" alt=\"hint\" src=\"/img/hint.png\" width=\"32\" height=\"32\">";
+        }
+        this.htmlBase +=
+            "</div><div id=\"oemathid-practice-question\" class=\"oemathclass-practice-question " + (this.flag == 1 ? "oemathclass-mathjax" : "") + "\">" + this.question + "</div><div class=\"form-inline\" style=\"width:100%\">";
         this.htmlSubmit = "<button id=\"oemathid-practice-submit\" class=\"oemathclass-practice-button oemathclass-button btn\" onclick=\"onclickSubmit()\">Submit</button>";
         this.htmlShowAnswer = "<button id=\"oemathid-practice-show-answer\" class=\"oemathclass-practice-button oemathclass-button btn width200\" onclick=\"onclickShowAnswer()\">Show Correct Answer</button>";
         if (this.type == ProblemType.Normal || this.type == ProblemType.Function) {
@@ -574,6 +641,7 @@ var Problem = (function () {
         this.htmlStartReview = "<button id=\"oemathid-practice-start-review\" class=\"oemathclass-practice-button oemathclass-button btn oemathclass-right\" onclick=\"onclickStartReview()\">Start Review</button>";
         this.htmlFinishReview = "<button id=\"oemathid-practice-finish-review\" class=\"oemathclass-practice-button oemathclass-button btn oemathclass-right\" onclick=\"onclickFinishReview()\">Finish Review</button>";
         this.htmlClosing = "</div>";
+        this.generateHintHtml();
     };
     Problem.prototype.fillEntered = function (entered) {
         $('.oemathclass-input').each((function (entered) {
@@ -601,16 +669,20 @@ var Problem = (function () {
             html += this.htmlAnswer;
             html += this.htmlStartReview;
             html += this.htmlSkip;
+            html += this.htmlHint;
         }
         else if (phase == Phase.Review) {
             html += this.htmlShowAnswer;
             html += this.htmlAnswer;
             html += this.htmlFinishReview;
+            html += this.htmlHint;
         }
         html += this.htmlClosing;
         //html = "<p id='xxxtestxxx'>HELLO!!!</p>" + html;
         $(id).empty().append(html);
-        MathJax.Hub.Queue(["Typeset", MathJax.Hub, ".oemathclass-mathjax"], function () { $('.oemathclass-mathjax').css("visibility", "visible"); });
+        /*    if (MathJax) {
+                MathJax.Hub.Queue(["Typeset", MathJax.Hub, ".oemathclass-mathjax"], function () { $('.oemathclass-mathjax').css("visibility", "visible"); });
+            }*/
         this.fillEntered(this.entered);
         if (phase == Phase.Practice) {
             $(id + " input[index=0]").focus();
@@ -645,10 +717,12 @@ var Problem = (function () {
         this.preprocess(); // replace abbr. like <.bb> in question, parameter and hint.
         this.parseParameterMap();
         this.parameter = this.replaceKnownParameters(this.parameter);
-        this.parameter = this.replaceOemathTags(this.parameter, this.index);
+        this.parameter = this.replaceOemathTags(this.parameter);
         this.processAnswerType();
         this.question = this.replaceKnownParameters(this.question);
-        this.question = this.replaceOemathTags(this.question, this.index);
+        this.question = this.replaceOemathTags(this.question);
+        this.hint = this.replaceKnownParameters(this.hint);
+        this.hint = this.replaceOemathTags(this.hint);
         this.generateHtmls();
         this.entered = new Array(this.inputCount);
         this.entered_wrong = null;
@@ -681,6 +755,15 @@ function onclickShowAnswer() {
     else {
         btn.text(correct);
         problem.fillEntered(problem.entered_wrong ? problem.entered_wrong : problem.entered);
+    }
+}
+function onClickMoreHints(idx) {
+    var n = +$("#oemathid-hintbtn" + idx).attr('status');
+    ++n;
+    $("#hint" + idx + "-" + n).css('display', 'block');
+    $("#oemathid-hintbtn" + idx).attr('status', n);
+    if (n == +$("#oemathid-hintbtn" + idx).attr('last')) {
+        $("#oemathid-hintbtn" + idx).css('display', 'none');
     }
 }
 function onInputChange(elem) {

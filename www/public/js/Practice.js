@@ -165,6 +165,8 @@ var Practice = (function () {
         });
     };
     Practice.prototype.onclickFinishReview = function () {
+        $(window).unbind('beforeunload');
+        window.location.href = "/math?grade=" + grade;
     };
     return Practice;
 }());
@@ -177,6 +179,7 @@ $(function () {
             }
         }
     });
+    //    $(window).bind('beforeunload', function () { return 'Are you sure to finish the practice?'; });
     var problem = practice.ajaxNextProblem();
     if (problem) {
         practice.showProblem(problem);

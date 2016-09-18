@@ -25,7 +25,7 @@ $(function(){
 	var child = '<div>';
 	var color = color[{{grade-1}}];
 	for (var i=0; i < content_category.title.length; i++) {
-		var url = '/practice?grade={{grade}}&category=' + content_category.cid[i] + '&title='+encodeURIComponent(content_category.title[i]);
+		var url = '/practice?grade={{grade}}&cid=' + content_category.cid[i]/* + '&title='+encodeURIComponent(content_category.title[i])*/;
 		child += '<div class="oemathclass-math-area oemathclass-math-area-3'+(i%3+1)+'">';
     	child += '<div class="oemathclass-math-category" style="border: 1px solid '+color+'">';
 		child += '<center><a class="oemathclass-math-category-title" style="color: '+color+'" href="'+url+'">'+content_category.title[i]+'</a></center>';
