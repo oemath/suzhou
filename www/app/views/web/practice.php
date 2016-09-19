@@ -3,6 +3,10 @@
 {% block title %}Grade {{grade}} | {{title}}{% endblock %}
 
 {% block content %}
+<script src="http://threejs.org/build/three.js"></script>
+<script src="http://threejs.org/examples/js/controls/OrbitControls.js"></script>
+<script src="http://threejs.org/examples/js/controls/TrackballControls.js"></script>
+
 <div>
 <h1><a href="/math?grade={{grade}}" style="color:green">Grade {{grade}}</a> - {{title}}</h1>
 <div id="oemathid-reviewbtn-container" style="margin-top:20px">

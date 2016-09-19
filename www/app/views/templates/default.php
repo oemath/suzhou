@@ -31,7 +31,6 @@
     	<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     {% endif %}
 <div id="oemathid-page-container">
-<div id="oemathid-page-header">	{% include 'templates/partials/header.php' %}</div>
 <div id="oemathid-page-navigation">{% include 'templates/partials/navigation.php' %}</div>
 <div id="oemathid-page-message">{% include 'templates/partials/messages.php' %}</div>
 <div id="oemathid-page-content">{% block content %}{% endblock %}</div>

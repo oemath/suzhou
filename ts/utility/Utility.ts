@@ -125,6 +125,16 @@
         }
     }
 
+    export function card(): string {
+        return ['heart', 'spade', 'diamond', 'club'][oe.rand(4)];
+    }
+
+    // the chance of sum of rolling dice (over 36)
+    export function dice2(a: number): number {
+        if (a < 2 || a > 12) return 0;
+        return [1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1][a - 2];
+    }
+
     export function cos(x: number): number {
         return Math.cos(x * Math.PI / 180);
     }
@@ -136,6 +146,24 @@
     export function round(value: number, decimals: number): string {
         //        return Number(Math.round(value + 'e' + decimals) + 'e-' + decimals);
         return value.toFixed(decimals);
+    }
+
+    export function money(m: number): string {
+        return m.toFixed(2);
+    }
+
+    export function ratio(a: number, b: number): string {
+        if (a <= 0 || b <= 0) return '';
+        let g = oe.gcd(a, b);
+        return `${a / g} : ${b / g}`; 
+    }
+
+    export function reverse(str: string): string {
+        return str.split("").reverse().join("");
+    }
+
+    export function comma(a: number): string {
+        return (a + '').replace(/(\d)(?=(\d{3})+$)/g, '$1,');
     }
 
     export function rf(a: number, b: number): string {

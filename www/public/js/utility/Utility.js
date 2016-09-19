@@ -152,6 +152,17 @@ var oe;
         }
     }
     oe.Dstr = Dstr;
+    function card() {
+        return ['heart', 'spade', 'diamond', 'club'][oe.rand(4)];
+    }
+    oe.card = card;
+    // the chance of sum of rolling dice (over 36)
+    function dice2(a) {
+        if (a < 2 || a > 12)
+            return 0;
+        return [1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1][a - 2];
+    }
+    oe.dice2 = dice2;
     function cos(x) {
         return Math.cos(x * Math.PI / 180);
     }
@@ -165,6 +176,25 @@ var oe;
         return value.toFixed(decimals);
     }
     oe.round = round;
+    function money(m) {
+        return m.toFixed(2);
+    }
+    oe.money = money;
+    function ratio(a, b) {
+        if (a <= 0 || b <= 0)
+            return '';
+        var g = oe.gcd(a, b);
+        return a / g + " : " + b / g;
+    }
+    oe.ratio = ratio;
+    function reverse(str) {
+        return str.split("").reverse().join("");
+    }
+    oe.reverse = reverse;
+    function comma(a) {
+        return (a + '').replace(/(\d)(?=(\d{3})+$)/g, '$1,');
+    }
+    oe.comma = comma;
     function rf(a, b) {
         var pos = 1;
         if (a < 0) {

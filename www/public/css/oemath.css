@@ -27,46 +27,24 @@ body{
 div.oemathclass-inactive a{
    pointer-events: none;
 }
-/************
- ************
-  header
- ************ 
- ************/
-#oemathid-page-header{
-	height: 48px;
-}
-#oemathid-header-left{
-    float: left;
-}
-#oemathid-header-right{
-	float: right;
-	margin-top: 8px;
-	margin-right: 10px;
-	width: 300px;
-}
-#oemathid-header-welcome{
-    float: right;
-    margin-top: 8px;
-    margin-right: 5px;
-    font-size:18px;
-}
-.oemathclass-header-right-button{
-	width: 100px;
-	float: right;
-	margin-right: 5px;
-}
 
 /************
  ************
   navigation
  ************ 
  ************/
-#oemathid-page-navigation{
+#oemathid-navbar{
     height: 48px;
 }
 
+.oemathclass-navbar{
+	width:80px;
+	text-align:center;
+}
 
-
+#oemathid-navbar-ul li.disabled a{
+	cursor: default;
+}
 /************
  ************
   content

@@ -5,17 +5,22 @@ Login
 {% endblock %}
 
 {% block content %}
+<script>
+$(function() {
+	$('#oemathid-navbar-login').addClass('active');
+});
+</script>
 
-<form action="{{ urlFor('login.post') }}" method="post" autocomplete="off">
+<form class="form-group" style="width:300px" action="{{ urlFor('login.post') }}" method="post" autocomplete="off">
 	<div>
 		<label for="identifier">Username/Email</label>
-		<input type="text" name="identifier" id="identifier">
+		<input class="form-control" type="text" name="identifier" id="identifier" placeholder="Username/Email">
 		{% if errors.has('identifier') %} {{ errors.first('identifier') }} {% endif %}
 	</div>
 
 	<div>
 		<label for="password">Password</label>
-		<input type="password" name="password" id="password">
+		<input class="form-control" type="password" name="password" id="password" placeholder="Password">
 		{% if errors.has('password') %} {{ errors.first('password') }} {% endif %}
 	</div>
 

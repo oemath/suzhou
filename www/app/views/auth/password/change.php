@@ -5,6 +5,11 @@ Change password
 {% endblock %}
 
 {% block content %}
+<script>
+$(function() {
+	$('#oemathid-navbar-account').addClass('active');
+});
+</script>
 
 <form action="{{ urlFor('password.change.post') }}" method="post" autocomplete="off">
 	<div>

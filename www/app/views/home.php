@@ -5,6 +5,8 @@
 {% block content %}
 <script>
 $(function(){
+	$('#oemathid-navbar-home').addClass('active');
+	 
 	var content_grade={
 		color: ["#1aa0b8", "#44b018", "#0fc1b8",
 				"#8e38ae", "#00a4e0", "#d84828",
