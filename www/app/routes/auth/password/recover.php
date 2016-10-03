@@ -33,7 +33,7 @@ $app->post('/recover-password', $guest(), function() use ($app) {
                 $message->subject('Recover your password');
             });
             
-            $app->flash('global', 'Email send');
+            $app->flash('global', 'An email containgin a link to recove password has been sent out.');
         }
         
         return $app->response->redirect($app->urlFor('home'));

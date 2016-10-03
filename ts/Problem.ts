@@ -124,6 +124,16 @@ class Problem {
         'per1': '  <b>Express your answer to the nearest tenth of a percent.</b>',
         'per2': '  <b>Express your answer to the nearest hundredth of a percent.</b>',
         'sci': '  <b>Express your answer in scientific notation.</b>',
+        'pi': '  <b>Use &pi; as 3.14.</b>',
+        'pi0': '  <b>Use &pi; as 3.14 and express your answer to the nearest integer.</b>',
+        'pi1': '  <b>Use &pi; as 3.14 and express your answer to the nearest tenth.</b>',
+        'pi2': '  <b>Use &pi; as 3.14 and express your answer to the nearest hundredth.</b>',
+
+        'mul': '  <b>This question has more than one correct answers, you only need to provide one of them.</b>',
+
+        'LCM': `<a class="oemathclass-tooltip" data-toggle="tooltip" data-html="true" title="Least Common Multiple">LCM</a>`,
+        'GCD': '<a class="oemathclass-tooltip" data-toggle="tooltip" data-html="true" title="Greatest Common Divisor, a.k.a GCF (Greatest Common Factor)">GCD</a>',
+        'yard': '<a class="oemathclass-tooltip" data-toggle="tooltip" data-html="true" title="1 mile = 1760 yards.  1 yard = 0.000568182 miles">yard</a>',
     };
 
 
@@ -169,12 +179,69 @@ class Problem {
         }
     }
 
+    // compare two strings.  special process for number comparison
+    private same(a: string, b: string): boolean {
+        let acomma: number = 0;
+        let anum: boolean = true;
+        for (let i = 0; i < a.length && anum; i++) {
+            if (a.charAt(i) == '.') {
+                if (++acomma > 1) anum = false;
+            }
+            else if (a.charAt(i) < '0' || a.charAt(i) > '9') anum = false;
+        }
+        let bcomma = 0;
+        let bnum: boolean = true;
+        for (let i = 0; i < b.length && bnum; i++) {
+            if (b.charAt(i) == '.') {
+                if (++bcomma > 1) bnum = false;
+            }
+            else if (b.charAt(i) < '0' || b.charAt(i) > '9') bnum = false;
+        }
+
+        if (!anum || !bnum) return a == b;
+
+        let idx: number;
+        // remove leading 0's from a
+        for (idx=0; idx < a.length && a.charAt(idx) == '0'; idx++);
+        if (idx < a.length) {
+            if (a.charAt(idx) == '.') {
+                a = `0${a.substring(idx)}`;
+            }
+            else {
+                a = a.substring(idx);
+            }
+        }
+        if (acomma == 1) {
+            let i: number;
+            for (i = a.length - 1; a.charAt(i) == '0' || a.charAt(i) == '.'; i--);
+            if (i < a.length - 1) a = a.substring(0, i+1);
+        }
+
+        // remove leading 0's from b
+        for (idx=0; idx < b.length && b.charAt(idx) == '0'; idx++);
+        if (idx < b.length) {
+            if (b.charAt(idx) == '.') {
+                b = `0${b.substring(idx)}`;
+            }
+            else {
+                b = b.substring(idx);
+            }
+        }
+        if (bcomma == 1) {
+            let i: number;
+            for (i = b.length - 1; b.charAt(i) == '0' || b.charAt(i) == '.'; i--);
+            if (i < b.length - 1) b = b.substring(0, i + 1);
+        }
+
+        return a == b;
+    }
+
     private evalLiteral(entered: string, expected: string): boolean {
         entered = entered.replace(/\s/g, '').toLowerCase();
-        let candidates = expected.split(';;');
+        let candidates: string[] = expected.split(';;');
         for (let i = 0; i < candidates.length; i++) {
             candidates[i] = candidates[i].replace(/\s/g, '').toLowerCase();
-            if (candidates[i].length > 0 && entered == candidates[i]) {
+            if (candidates[i].length > 0 && this.same(entered, candidates[i])) {
                 return true;
             }
         }
@@ -184,28 +251,75 @@ class Problem {
     /////////////////////////////////////////////////
     // Parse parameters - Start
     /////////////////////////////////////////////////
-    private generateValue(parameter : string) : number {
+    private generateValue(parameter: string): number {
+        let ex: number = parameter.indexOf('|');
+        let eList: number[] = [];
+        if (ex > 0) {
+            let el: string[] = parameter.substring(ex + 1).trim().split(',');
+            for (let i = 0; i < el.length; i++) {
+                let temp: number = this.eval(el[i]);
+                if (temp != undefined && !isNaN(temp)) {
+                    eList.push(temp);
+                }
+            }
+            parameter = parameter.substring(0, ex);
+        }
+
         if (parameter.indexOf('-') > 0) {
             let range = parameter.trim().split('-');
-            let first = this.eval(range[0]);
-            let last = this.eval(range[1]);
-            return first + oe.rand(last - first + 1);
+            let first: number = this.eval(range[0]);
+            let last: number = this.eval(range[1]);
+            let rtn: number;
+            let nan: number = 1000;
+            for (; nan > 0; nan--) {
+                rtn = first + oe.rand(last - first + 1);
+                if (-1 == $.inArray(rtn, eList)) break;
+            }
+            if (nan == 0) { // failed trying. let's iterate
+                for (rtn = first; rtn <= last; rtn++) {
+                    if (-1 == $.inArray(rtn, eList)) break;
+                }
+                if (rtn > last) rtn = NaN;
+            }
+            return rtn;
         }
         else {
             let enum_list : string[] = parameter.split(',');
-            return this.eval(enum_list[oe.rand(enum_list.length)]);
+            let rtn: number;
+            let nan: number = 1000;
+            for (; nan > 0; nan--) {
+                rtn = this.eval(enum_list[oe.rand(enum_list.length)]);
+                if (-1 == $.inArray(rtn, eList)) break;
+            }
+            if (nan == 0) { // failed trying. let's iterate
+                rtn = NaN;
+                for (let i = 0; i < enum_list.length; i++) {
+                    if (-1 == $.inArray(this.eval(enum_list[i]), eList)) {
+                        rtn = this.eval(enum_list[i]);
+                        break;
+                    }
+                }
+            }
+            return rtn;
+//            return this.eval(enum_list[oe.rand(enum_list.length)]);
         }
     }
 
     private evalRandom(parameter: string) : string {
-        while (true) {
+/*        while (true) {
             var start = parameter.indexOf('{{');
             if (start < 0) break;
 
             var end = parameter.indexOf('}}', start + 2);
+            if (end < 0) break;
             var rand_result = this.generateValue(parameter.substr(start + 2, end - start - 2));
             parameter = parameter.substr(0, start) + rand_result + parameter.substr(end + 2);
-        }
+        }*/
+        parameter = parameter.replace(/{{(.*?)}}/g, (function (thisObj: Problem) {
+            return function (m, $1) {
+                return `${thisObj.generateValue($1)}`;
+            };
+        })(this));
 
         return parameter;
     }
@@ -223,6 +337,7 @@ class Problem {
                 value = parameter.substr(eql + 1).trim();
             }
             value = this.replaceKnownParameters(value).replace(/[\r\n]/g, '');
+            value = this.replaceEval(value);
             value = this.evalRandom(value);
 
             if (!(name == 'ans' && (
@@ -231,7 +346,7 @@ class Problem {
                 this.type == ProblemType.TrueFalse ||
                 this.type == ProblemType.Radio ||
                 this.type == ProblemType.Checkbox))) {
-                value = `${this.eval(value)}`;
+                value = (value.indexOf('undefined') < 0) ? `${this.eval(value)}` : 'undefined';
             }
 
             this.value_map[`<${name}>`] = value;
@@ -668,6 +783,8 @@ class Problem {
     }
 
     private generateHintHtml(): void {
+        this.htmlHint = '';
+
         if (!this.hint) return;
 
         let mul_hints: string[] = this.hint.split('$$$');
@@ -698,38 +815,16 @@ ${this.generateHint(mul_hints[0], 0)}</div>`;
 `</div><div class="modal-footer">\
 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>\
 </div></div></div></div>`;
-        /*
-        let hints: string[] = this.hint.split('$$');
-
-        this.htmlHint = 
-`<div class="modal" id="oemathid-hintsModal" role="dialog"><div class="modal-dialog">\
-<div class="modal-content">\
-<div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button>\
-<h4 class="modal-title">Hints</h4></div>\
-<div class="modal-body oemathclass-hintmodal">\
-<div><p>${hints[0]}</p>`;
-        for (let i: number = 1; i < hints.length; i++) {
-            this.htmlHint += `<div style="display:none" id="hint${i}"><hr><p>${hints[i]}</p></div>`;
-        }
-
-        if (hints.length > 1) {
-            this.htmlHint += `<a style="cursor:pointer" onclick= "onClickMoreHints()" id= 'oemathid-hintbtn' status= 0 last=${hints.length-1} >Show more hints</a>`;
-        }
-
-        this.htmlHint += 
-`</div></div><div class="modal-footer">\
-<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>\
-</div></div></div></div>`;*/
     }
 
     public generateHtmls(): void
     {
         this.htmlBase = 
-`<div id="oemathid-question-html"><hr/><div class="oemathclass-practice-title" style="height:60px;"><span style="display:inline-block;float:left;font-size:36px;">Question</span>`;
+`<div id="oemathid-question-html"><hr/><div class="oemathclass-title" style="height:60px;"><span style="display:inline-block;float:left;color:green;">Question</span>`;
 
         if (this.hint) {
             this.htmlBase +=
-`<input type="image" data-toggle="modal" data-target="#oemathid-hintsModal" style="display:inline-block;float:right;outline:none" border="0" title="Need some hint?" alt="hint" src="/img/hint.png" width="32" height="32">`;
+`<input type="image" data-toggle="modal" data-target="#oemathid-hintsModal" style="display:inline-block;float:right;outline:none" border="0" title="Need some hint?" alt="hint" src="/img/page/hint.png" width="32" height="32">`;
         }
 
         this.htmlBase += 
@@ -798,9 +893,12 @@ ${this.generateHint(mul_hints[0], 0)}</div>`;
 
         //html = "<p id='xxxtestxxx'>HELLO!!!</p>" + html;
         $(id).empty().append(html);
-    /*    if (MathJax) {
+        if (MathJax != undefined) {
             MathJax.Hub.Queue(["Typeset", MathJax.Hub, ".oemathclass-mathjax"], function () { $('.oemathclass-mathjax').css("visibility", "visible"); });
-        }*/
+        }
+        else {
+            $('.oemathclass-mathjax').css("visibility", "visible");
+        }
         this.fillEntered(this.entered);
 
         if (phase == Phase.Practice) {
@@ -814,7 +912,7 @@ ${this.generateHint(mul_hints[0], 0)}</div>`;
 //        $("#xxxtestxxx").text("Hello, world!!");
     }
 
-    private preprocess(): void {
+    private postprocess(): void {
         let question: string = this.question;
         let parameter: string = this.parameter;
         let hint: string = this.hint;
@@ -835,19 +933,29 @@ ${this.generateHint(mul_hints[0], 0)}</div>`;
         this.hint = hint;
     }
 
+    private replaceEval(str: string): string {
+        str = str.replace(/<\?(.*?)\?>/g, function (m, $1) {
+            return this.eval($1);
+        });
+        return str;
+    }
+
     public process(): boolean {
-        this.preprocess(); // replace abbr. like <.bb> in question, parameter and hint.
 
         this.parseParameterMap();
-        this.parameter = this.replaceKnownParameters(this.parameter);
-        this.parameter = this.replaceOemathTags(this.parameter);
+//        this.parameter = this.replaceKnownParameters(this.parameter);
+//        this.parameter = this.replaceOemathTags(this.parameter);
 
         this.processAnswerType();
         this.question = this.replaceKnownParameters(this.question);
+        this.question = this.replaceEval(this.question);
         this.question = this.replaceOemathTags(this.question);
 
         this.hint = this.replaceKnownParameters(this.hint);
+        this.hint = this.replaceEval(this.hint);
         this.hint = this.replaceOemathTags(this.hint);
+
+        this.postprocess(); // replace abbr. like <.bb> in question, parameter and hint.
 
         this.generateHtmls();
 

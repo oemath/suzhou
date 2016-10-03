@@ -33,7 +33,7 @@ $app->post('/change-password', $authenticated(), function() use ($app) {
             $message->subject('You changed your password');
         });
         
-        $app->flash('global', 'Your password has been change!');
+        $app->flash('global', 'Your password has been changed!');
         $app->response->redirect($app->urlFor('home'));
     }
     else {

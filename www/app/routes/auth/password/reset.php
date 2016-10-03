@@ -9,14 +9,13 @@ $app->get('/password-reset', $guest(), function() use ($app) {
     $hashedIdentifier = $app->hash->hash($identifier);
     
     $user = $app->user->where('email', $email)->first();
-    if (!$user || !$user->recover_hash) {
-        return $app->response->redirect($app->urlFor('home'));
+    if (!$user || 
+    	!$user->recover_hash ||
+    	!$app->hash->hashCheck($user->recover_hash, $hashedIdentifier)) {
+    	$app->flash('global', 'The link to reset password is invalid or expired');
+    	return $app->response->redirect($app->urlFor('home'));
     }
-    
-    if (!$app->hash->hashCheck($user->recover_hash, $hashedIdentifier)) {
-        return $app->response->redirect($app->urlFor('home'));
-    }
-    
+        
     $app->render('auth/password/reset.php', [
             'email' => $user->email,
             'identifier' => $identifier
@@ -34,18 +33,18 @@ $app->post('/password-reset', $guest(), function() use ($app) {
     
     $user = $app->user->where('email', $email)->first();
     if (!$user) {
-        $app->flash('global', 'Email not found.');
-        return $app->response->redirect($app->urlFor('home'));
+    	$app->flash('global', 'The link to reset password is invalid or expired');
+    	return $app->response->redirect($app->urlFor('home'));
     }
     
     if (!$user->recover_hash) {
-        $app->flash('global', 'unknown recover_hash');
-        return $app->response->redirect($app->urlFor('home'));
+    	$app->flash('global', 'The link to reset password is invalid or expired');
+    	return $app->response->redirect($app->urlFor('home'));
     }
     
     if (!$app->hash->hashCheck($user->recover_hash, $hashedIdentifier)) {
-        $app->flash('global', 'mismatch recover_hash');
-        return $app->response->redirect($app->urlFor('home'));
+    	$app->flash('global', 'The link to reset password is invalid or expired');
+    	return $app->response->redirect($app->urlFor('home'));
     }
 
     $password = $request->post('password');
@@ -64,12 +63,14 @@ $app->post('/password-reset', $guest(), function() use ($app) {
                 'recover_hash' => null
         ]);
         
-        $app->flash('global', 'Your password has been reset.');
+        $app->flash('global', 'Password has been reset');
         return $app->response->redirect($app->urlFor('home'));
     }
     
     $app->render('auth/password/reset.php', [
-            'errors' => $v->errors()
+            'email' => $email,
+            'identifier' => $identifier,
+    		'errors' => $v->errors()
     ]);
     
 })->name('password.reset.post');

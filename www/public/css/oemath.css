@@ -1,8 +1,23 @@
 @CHARSET "UTF-8";
 
 body{
+	padding-top: 50px;
     margin: 0 auto;
     max-width: 1000px;
+}
+
+.oemathclass-font-gothic{
+    font-family: "Century Gothic", CenturyGothic, AppleGothic, sans-serif;
+}
+
+#oemathid-navbar  {
+	max-width: 1000px;
+	margin: 0 auto;
+  -webkit-border-radius: 0 !important;
+     -moz-border-radius: 0 !important;
+          border-radius: 0 !important;
+	margin-bottom: 0;
+	font-size:18px;
 }
 
 .width100{ width: 100px; }
@@ -11,6 +26,14 @@ body{
 .width200{ width: 200px; }
 .oemathclass-right { float: right; }
 
+.oemathclass-faform div{
+	margin-top: 10px;
+}
+
+.oemathclass-form-wrong{
+	color: red;
+}
+
 .oemathclass-button{
     background-color: lightgreen;
     border-color: green;
@@ -18,6 +41,12 @@ body{
 
 .oemathclass-button:hover{
     background-color: rgb(160,255,120);
+}
+
+#oemathid-page-message{
+	width: 100%;
+	background-color: #ccffcc;
+	color: green;
 }
 
 #oemathid-page-container{
@@ -34,7 +63,8 @@ div.oemathclass-inactive a{
  ************ 
  ************/
 #oemathid-navbar{
-    height: 48px;
+    min-height: 48px;
+    width: 100%;
 }
 
 .oemathclass-navbar{
@@ -51,12 +81,14 @@ div.oemathclass-inactive a{
  ************ 
  ************/
 #oemathid-page-content{
+	width: 100%;
+	margin: 0 auto;
 	min-height:640px;
     background-color: #fafffa;
     overflow: auto;
 }
-#oemathid-content-banner-container{
-	height: 240px;
+#oemathid-content-carousel{
+	height: 300px;
 	background-color: #eeffee;
 }
 #oemathid-content-grade-container{
@@ -119,11 +151,18 @@ div.oemathclass-inactive a{
     color: white;
     font-size: 24px;
 }
+@font-face {
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Open Sans'), local('OpenSans'), url('http://themes.googleusercontent.com/static/fonts/opensans/v5/cJZKeOuBrn4kERxqtaUH3T8E0i7KZn-EPnyo3HZu7kw.woff') format('woff');
+}
 .oemathclass-grade-link-text{
 	padding-left: 40px;
 	positive: relative;
     font-size: 32px;
 }
+
 /************
  ************
   footer
@@ -159,5 +198,21 @@ div.oemathclass-inactive a{
 .oemathclass-math-category-title{
     font-size: 32px;
     text-align: center;
+}
+
+
+.oemathclass-tooltip{
+	font-style: italic;
+}
+
+
+.oemathclass-title{
+	font-family: "Century Gothic", CenturyGothic, AppleGothic, sans-serif;
+	font-size:24px;
+	color: green;
+	margin-top: 12px;
+}
+
+	
 }
 

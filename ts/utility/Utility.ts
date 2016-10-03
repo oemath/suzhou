@@ -1,10 +1,26 @@
 ﻿namespace oe {
 
-    export function rand(n: number): number {
-        return ((Math.random() * 100000000) % n) >> 0;
+    export function rand(n: number, m?: number): number {
+        if (n == undefined || isNaN(n) || n < 0) return NaN;
+        if (m == undefined || isNaN(m)) {
+            m = n;
+            n = 0;
+        }
+        if (m < 0) return NaN;
+        if (n > m) {
+            let x: number = n;
+            n = m;
+            m = x;
+        }
+        m = Math.floor(m);
+        n = Math.floor(n);
+
+        return +n + Math.floor((Math.random() * 100000000) % (m - n));
     }
 
-    export function shuffle(a, len: number) {
+    export function shuffle(a, len?: number): any {
+        if (a == undefined) return 'undefined';
+        if (len == undefined || isNaN(len)) len = a.length;
         let j, x, i;
         for (i = len; i; i -= 1) {
             j = Math.floor(Math.random() * i);
@@ -12,15 +28,58 @@
             a[i - 1] = a[j];
             a[j] = x;
         }
+        return a;
     }
 
-    export function shuffle2(a) {
+    export function shuffle2(a): any {
         shuffle(a, a.length);
+        return a;
+    }
+
+    export function choose(a, n: number): string {
+        if (n < 0 || n >= a.length) return '[]';
+        let rtn = `${a[n]}`;
+        for (let i = 0; i < a.length; i++) {
+            if (i != n) rtn += `,${a[i]}`;
+        }
+        return rtn;
+    }
+
+    export function chooseStr(a: string[], n: number): string {
+        if (n < 0 || n >= a.length) return '[]';
+        let rtn = `'${a[n]}'`;
+        for (let i = 0; i < a.length; i++) {
+            if (i != n) rtn += `,'${a[i]}'`;
+        }
+        return rtn;
+    }
+
+    export function chooseWeek(n: number): string {
+        if (n === undefined || isNaN(n) || n < 0) return 'undefined';
+        n %= 7;
+        let a: string[] = ['##0Sunday', '##6Monday', '##5Tuesday', '##4Wednesday', '##3Thursday', '##2Friday', '##1Saturday'];
+        let rtn: string[] = [];
+        rtn.push(`${a[n]}`);
+        for (let i = 0; i < a.length; i++) {
+            if (i != n) rtn.push(`${a[i]}`);
+        }
+        return rtn.join(';;');
+    }
+
+    export function generateRadio(a, n: number): string {
+        if (n < 0 || n >= a.length) return ';;';
+        let rtn = `${a[n]}`;
+        for (let i = 0; i < a.length; i++) {
+            if (i != n) rtn += `;;${a[i]}`;
+        }
+        return rtn;
     }
 
     export function gcd_(x: number, y: number): number {
         if (y === undefined) return x;
-        if (x === undefined) return 1;
+        if (x === undefined) return y;
+        if (isNaN(x)) return x;
+        if (isNaN(y)) return y;
 
         while (y != 0) {
             var z = x % y;
@@ -69,6 +128,8 @@
 
     /// Permutation and combination
     export function F(n: number): number {
+        if (isNaN(n)) return n;
+
         var f: number = 1;
         for (var i = 2; i <= n; i++) {
             f *= i;
@@ -77,13 +138,15 @@
     }
 
     export function P(n: number, m: number): number {
+        if (isNaN(n)) return n;
+        if (isNaN(m)) return m;
         var f: number = 1;
         for (var i = n - m + 1; i <= n; i++) {
             f *= i;
         }
         return f;
     }
-    
+
     export function C(n: number, m: number): number {
         return P(n, m) / F(m);
     }
@@ -91,7 +154,7 @@
     // last digit of a^n
     export function ones(a: number, n: number): number {
         if (n == 0) return 1;
-        if (a == 0 || a==1 || a==5 || a==6) return a;
+        if (a == 0 || a == 1 || a == 5 || a == 6) return a;
         if (a == 2) return [6, 2, 4, 8][n % 4];
         if (a == 3) return [1, 3, 9, 7][n % 4];
         if (a == 4) return [6, 4][n % 2];
@@ -111,28 +174,87 @@
         return n;
     }
 
-    // a: 0-9; 0->zero, 1->one, ...
-    export function dstr(a: number): string {
-        if (0 <= a && a <= 9) {
-            return ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'][a];
-        }
-    }
-
     // a: 0-9; 0->Zero, 1->One, ...
     export function Dstr(a: number): string {
-        if (0 <= a && a <= 9) {
-            return ['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'][a];
+        if (0 <= a && a <= 20) {
+            return ['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
+                'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen', 'Twenty'][a];
         }
+        return '-';
     }
 
-    export function card(): string {
-        return ['heart', 'spade', 'diamond', 'club'][oe.rand(4)];
+    // a: 0-9; 0->zero, 1->one, ...
+    export function dstr(a: number): string {
+        return Dstr(a).toLowerCase();
+    }
+
+    // a: 1-9; 1->First, ...
+    export function Tstr(a: number): string {
+        if (1 <= a && a <= 20) {
+            return ['Fisrt', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth', 'Seventh', 'Eighth', 'Ninth', 'Tenth', 'Eleventh',
+                'Twelveth', 'Thirteenth', 'Fourteenth', 'Fifteenth', 'Sixteenth', 'Seventeenth', 'Eighteenth', 'Nineteenth', 'Twentieth'][a - 1];
+        }
+        return '-';
+    }
+
+    // a: 2-9; 2->Twice, ...
+    export function Mstr(a: number): string {
+        if (a == 2) return 'Twice';
+        return a > 2 ? `${oe.Dstr(a)} times` : '-';
+    }
+
+    // a: 2-9; 2->twice, ...
+    export function mstr(a: number): string {
+        return Mstr(a).toLowerCase();
+    }
+
+    // a: 2-9; 2->Half, ...
+    export function Mstr2(a: number): string {
+        if (a == 2) return 'Half';
+        return a > 2 ? `One ${oe.Tstr(a)}` : '-';
+    }
+
+    // a: 2-9; 2->half, ...
+    export function mstr2(a: number): string {
+        return Mstr2(a).toLowerCase();
+    }
+
+    // a: 1-9; 1->First, ...
+    export function tstr(a: number): string {
+        return Tstr(a).toLowerCase();
+    }
+
+    export function ngon(a: number): string {
+        if (a >= 3 && a <= 10)
+            return ['triangle', 'quadrilateral', 'pentagon', 'hexagon', 'heptagon', 'octagon', 'nanogon', 'decagon'][a - 3];
+        return '-';
+    }
+
+    export function card(c?: number): string {
+        if (c == undefined || isNaN(c)) c = oe.rand(4);
+        if (c < 0 || c > 3) return 'undefined';
+        return ['spade', 'diamond', 'heart', 'club'][c];
+    }
+    // 1:A, 13-King
+    export function cardName(a: number): string {
+        if (a == undefined || isNaN(a) || a < 1 || a > 13) return 'undefined';
+        if (2 <= a && a <= 10) return oe.dstr(a);
+        if (a == 1) return 'ace';
+        if (a == 11) return 'jack';
+        if (a == 12) return 'queen';
+        return 'king';
     }
 
     // the chance of sum of rolling dice (over 36)
     export function dice2(a: number): number {
         if (a < 2 || a > 12) return 0;
         return [1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1][a - 2];
+    }
+
+    // the chance of sum of rolling dice (over 36)
+    export function dice3(a: number): number {
+        if (a < 3 || a > 18) return 0;
+        return [1, 3, 6, 10, 15, 21, 25, 27, 27, 25, 21, 15, 10, 6, 3, 1][a - 3];
     }
 
     export function cos(x: number): number {
@@ -144,8 +266,31 @@
     }
 
     export function round(value: number, decimals: number): string {
+        if (decimals == undefined) decimals = 0;
         //        return Number(Math.round(value + 'e' + decimals) + 'e-' + decimals);
         return value.toFixed(decimals);
+    }
+    export function round0(value: number): string { return oe.round(value, 0); }
+    export function round1(value: number): string { return oe.round(value, 1); }
+    export function round2(value: number): string { return oe.round(value, 2); }
+    export function round3(value: number): string { return oe.round(value, 3); }
+
+    export function norm(a: number): string {
+        var n: number = 0;
+        while (Math.abs(a - parseFloat(oe.round(a, n))) > 1e-8) n++;
+        return oe.round(a, n)
+    }
+
+    // prefix 0's until a is n-digit. n is default to 2.
+    export function pre0(a: number, n: number): string {
+        if (isNaN(a)) return 'NaN';
+        if (a == undefined) return 'undefined';
+        if (n == undefined || isNaN(n)) n = 2;
+        let d: number = 0, c: number = 1;
+        for (; a >= c; c *= 10, ++d);
+        let s: string = '';
+        for (; d < n; d++) s += '0';
+        return s + a;
     }
 
     export function money(m: number): string {
@@ -155,7 +300,7 @@
     export function ratio(a: number, b: number): string {
         if (a <= 0 || b <= 0) return '';
         let g = oe.gcd(a, b);
-        return `${a / g} : ${b / g}`; 
+        return `${a / g} : ${b / g}`;
     }
 
     export function reverse(str: string): string {
@@ -167,6 +312,8 @@
     }
 
     export function rf(a: number, b: number): string {
+        if (isNaN(a)) return `${a}`;
+        if (isNaN(b)) return `${b}`;
         var pos: number = 1;
         if (a < 0) { pos = 1 - pos; a = -a; }
         if (b < 0) { pos = 1 - pos; b = -b; }
@@ -176,6 +323,8 @@
 
     // return string representation of reduced fraction a/b, using \over
     export function rfm(a: number, b: number): string {
+        if (isNaN(a)) return `${a}`;
+        if (isNaN(b)) return `${b}`;
         var pos: number = 1;
         if (a < 0) { pos = 1 - pos; a = -a; }
         if (b < 0) { pos = 1 - pos; b = -b; }
@@ -183,24 +332,333 @@
         return '{' + ['-', ''][pos] + (b == g ? a / g : (a / g + " \\over " + b / g)) + '}';
     }
 
+    // a: '1/2', b:'2/3'
+    function fracAdd_(a: string, b: string, flag: boolean): string {
+        if (a == undefined || b == undefined) return 'undefined';
+        if (a.length == 0) return b;
+        if (b.length == 0) return a;
+
+        let m1: number, n1: number, m2: number, n2: number;
+        let idx: number = a.indexOf('/');
+        if (idx > 0) {
+            m1 = parseInt(a.substring(0, idx).trim());
+            n1 = parseInt(a.substring(idx + 1).trim());
+        }
+        else {
+            m1 = parseInt(a.trim());
+            n1 = 1;
+        }
+
+        idx = b.indexOf('/');
+        if (idx > 0) {
+            m2 = parseInt(b.substring(0, idx).trim());
+            n2 = parseInt(b.substring(idx + 1).trim());
+        }
+        else {
+            m2 = parseInt(b.trim());
+            n2 = 1;
+        }
+
+        return flag ?
+            oe.rf(m1 * n2 + m2 * n1, n1 * n2) :
+            oe.rf(m1 * n2 - m2 * n1, n1 * n2);
+    }
+    export function fracAdd(a: string, b: string): string {
+        return fracAdd_(a, b, true);
+    }
+    export function fracSub(a: string, b: string): string {
+        return fracAdd_(a, b, false);
+    }
+
+    export function fracComp(m1: number, n1: number, m2: number, n2: number): number {
+        if (m1 == undefined || n1 == undefined || m2 == undefined || n2 == undefined) return NaN;
+        if (isNaN(m1) || isNaN(n1) || isNaN(m2) || isNaN(n2) || n1 == 0 || n2 == 0) return NaN;
+        let diff: number = m1 * n2 - m2 * n1;
+        if (diff == 0) return 0;
+        if (n1 * n2 < 0) return diff > 0 ? -1 : 1;
+        return diff < 0 ? -1 : 1;
+    }
+
+    export function sci(n: number): number[] {
+        if (n == undefined || isNaN(n)) return [NaN, NaN];
+        let d = 0;
+        while (n >= 10) {
+            n /= 10;
+            d++;
+        }
+        return [n, d];
+    }
+
     export function weekday(a: number): string {
-        if (0 <= a && a <= 6) {
-            return ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][a];
+        if (0 <= a && a <= 7) {
+            return ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][a];
         }
         return '';
     }
 
     export function month(a: number): string {
         if (1 <= a && a <= 12) {
-            return ['January', 'Feburary', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'Novermber', 'December'][a-1];
+            return ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'Novermber', 'December'][a - 1];
         }
         return '';
     }
 
     export function month_abbr(a: number): string {
         if (1 <= a && a <= 12) {
-            return ['Jan.', 'Feb.', 'Mar.', 'Apr.', 'May', 'Jun.', 'Jul.', 'Aug.', 'Sept.', 'Oct.', 'Nov.', 'Dec.'][a-1];
+            return ['Jan.', 'Feb.', 'Mar.', 'Apr.', 'May', 'Jun.', 'Jul.', 'Aug.', 'Sept.', 'Oct.', 'Nov.', 'Dec.'][a - 1];
         }
         return '';
+    }
+
+    export function hypo(a: number, b: number): number {
+        return Math.sqrt(a * a + b * b);
+    }
+    export function hypo2(a: number, b: number): number {
+        return a * a + b * b;
+    }
+
+    export function log(b: number, n: number): number {
+        return Math.log(n) / Math.log(b);
+    }
+
+    // return a list of primes in [min, max]
+    export function prime(min: number, max?: number): number[] {
+        let pr: number[] = [];
+        if (min == undefined || isNaN(min)) return pr;
+        if (max == undefined || isNaN(max)) {
+            max = min;
+            min = 1;
+        }
+        if (min <= 0 || max < 2 || min > max) return pr;
+
+        let prime_numbers: number[] = [
+            2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59,
+            61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127,
+            131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193,
+            197, 199, 211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269,
+            271, 277, 281, 283, 293, 307, 311, 313, 317, 331, 337, 347, 349,
+            353, 359, 367, 373, 379, 383, 389, 397, 401, 409, 419, 421, 431,
+            433, 439, 443, 449, 457, 461, 463, 467, 479, 487, 491, 499, 503,
+            509, 521, 523, 541, 547, 557, 563, 569, 571, 577, 587, 593, 599,
+            601, 607, 613, 617, 619, 631, 641, 643, 647, 653, 659, 661, 673,
+            677, 683, 691, 701, 709, 719, 727, 733, 739, 743, 751, 757, 761,
+            769, 773, 787, 797, 809, 811, 821, 823, 827, 829, 839, 853, 857,
+            859, 863, 877, 881, 883, 887, 907, 911, 919, 929, 937, 941, 947,
+            953, 967, 971, 977, 983, 991, 997];
+        let i = 0;
+        for (; i < prime_numbers.length && prime_numbers[i] < min; i++);
+        for (; i < prime_numbers.length && prime_numbers[i] <= max; i++) pr.push(prime_numbers[i]);
+        return pr;
+    }
+
+    export function randPrime(min: number, max?: number): number {
+        if (min == undefined || isNaN(min)) return NaN;
+        if (max == undefined || isNaN(max)) {
+            max = min;
+            min = 1;
+        }
+        if (min <= 0 || max < 2 || min > max) return NaN;
+        let pc = oe.prime(min, max);
+        return pc[oe.rand(pc.length)];
+    }
+
+    // i: [0-8] return a pythagorean triple
+    export function pnum(i: number): number[] {
+        let pns: number[][] =
+            [[3, 4, 5],
+            [5, 12, 13],
+            [7, 24, 25],
+            [9, 40, 41],
+            [11, 60, 61],
+            [13, 84, 85],
+            [8, 15, 17],
+            [12, 35, 37],
+            [16, 63, 65]];
+        if (i == undefined || isNaN(i) || i < 0 || i > 8) return pns[0];
+        return pns[i];
+    }
+
+    // 1, 5, 10, 25
+    export function coin(n: number): number[] {
+        let r: number[] = [];
+        if (n > 100) return r;
+        for (let i = 0; i <= n; i++) {
+            for (let j = 0; j <= n - i; j++) {
+                for (let k = 0; k <= n - i - j; k++) {
+                    let l = n - i - j - k;
+                    let v: number = i * 25 + j * 10 + k * 5 + l;
+                    if ($.inArray(v, r) == -1) r.push(v);
+                }
+            }
+        }
+        return r.sort(function (a, b) { return a - b; });
+    }
+
+    // y = ax + b
+    export function formulaLine(a: number, b: number): string {
+        if (a == undefined || b == undefined || isNaN(a) || isNaN(b)) return 'undefined';
+        let r = 'y = ';
+
+        if (a == -1) {
+            r += `-x`;
+        }
+        else if (a == 1) {
+            r += `x`;
+        }
+        else if (a < 0) {
+            r += `-${-a}x`;
+        }
+        else if (a > 0) {
+            r += `${a}x`;
+        }
+
+        if (a == 0) {
+            r += `${-b}`;
+        }
+        else if (b < 0) {
+            r += ` - ${-b}`;
+        }
+        else if (b > 0) {
+            r += ` + ${b}`;
+        }
+
+        return r;
+    }
+
+    export function composite(start: number): number {
+        if (start == undefined || isNaN(start)) return start;
+        if (start >= 990) return 987;
+        let arr: number[] = oe.prime(1, 1000);
+        let x: number = start;
+        while (arr.indexOf(x) >= 0 || (x % 5 == 0)) x += 2;
+        return x;
+    }
+
+    // covert b-based number x to 10-based number
+    export function base10(x: number, b: number): number {
+        if (x == undefined || b == undefined || isNaN(x) || isNaN(b) || b<=1) return undefined;
+        let mul: number = 1;
+        let rlt: number = 0;
+        while (x) {
+            rlt += mul * (x % 10);
+            mul *= b;
+            x = Math.floor(x/10);
+        }
+        return rlt;
+    }
+
+    // covert 10-based number x to b-based number
+    export function baseX(x: number, b: number): number {
+        if (x == undefined || b == undefined || isNaN(x) || isNaN(b) || b<=1) return undefined;
+        let mul: number = 1;
+        let rlt: number = 0;
+        while (x) {
+            rlt += mul * (x % b);
+            mul *= 10;
+            x = Math.floor(x / b);
+        }
+        return rlt;
+    }
+
+    // return a lisst of primes in [min, max]
+    export function primeCount(min: number, max: number): number {
+        return oe.prime(min, max).length;
+    }
+
+    export function isPrime(a: number): boolean {
+        if (a <= 1) return false;
+
+        for (let i = Math.floor(Math.sqrt(a)); i >= 2; i--) {
+            if (a % i == 0) return false;
+        }
+        return true;
+    }
+
+    // make an array has a mode, i.e. most frequent number
+    export function modable(a: number[]): string {
+        if (a == undefined) return 'undefined';
+        let mmap: { [k: number]: number } = {};
+        for (let i = 0; i < a.length; i++) mmap[a[i]] = 0;
+        for (let i = 0; i < a.length; i++) mmap[a[i]]++;
+        let mcnt = 0, mnum = 0
+        $.each(mmap, function (k, v) {
+            if (mcnt < v) {
+                mcnt = v;
+                mnum = k;
+            }
+        });
+        for (let i = 0; i < a.length; i++) {
+            if (a[i] != mnum && mmap[a[i]] == mcnt) {
+                let cln = a.slice(0);
+                cln[i] = mnum;
+                return cln.join(',');
+            }
+        }
+
+        return a.join(',');
+    }
+
+    export function mode(a: number[]): number {
+        if (a == undefined) return NaN;
+        let mmap: { [k: number]: number } = {};
+        for (let i = 0; i < a.length; i++) mmap[a[i]] = 0;
+        for (let i = 0; i < a.length; i++) mmap[a[i]]++;
+        let mcnt = 0, mnum = 0
+        $.each(mmap, function (k, v) {
+            if (mcnt < v) {
+                mcnt = v;
+                mnum = k;
+            }
+        });
+        return mnum;
+    }
+
+    export function median(a: number[]): number {
+        if (a == undefined || a.length <= 0) return NaN;
+        let sa = a.sort(function (x: number, y: number) {
+            return x - y;
+        });
+        return (a[Math.floor(a.length / 2)] + a[Math.floor((a.length-1) / 2)])/2;
+    }
+
+    export function range(a: number[]): number {
+        if (a == undefined) return NaN;
+        if (a.length <= 0) return 0;
+        let sa = a.sort(function (x: number, y: number) {
+            return x - y;
+        });
+        return a[a.length - 1] - a[0];
+    }
+
+    export function mean(a: number[]): number {
+        if (a == undefined) return NaN;
+        if (a.length <= 0) return 0;
+        let s: number = 0;
+        for (let i = 0; i < a.length; i++) {
+            s += a[i];
+        }
+        return s/a.length;
+    }
+
+    // integer divid
+    export function div(m: number, n: number): number {
+        if (m == undefined) return m;
+        if (n == undefined) return n;
+        if (isNaN(m) || isNaN(m)) return NaN;
+        return Math.floor(m / n);
+    }
+
+
+    export function leapYear(year) {
+        return ((year % 4 == 0) && (year % 100 != 0)) || (year % 400 == 0);
+    }
+
+    export function join(x: any[]): string {
+        if (x == undefined) return 'undefined';
+
+        if (x.length == 0) return '';
+        if (x.length == 1) return `${x[0]}`;
+        if (x.length == 2) return `${x[0]} and ${x[1]}`;
+        return `${x.slice(0, x.length - 1).join(", ")}, and ${x[x.length-1]}`;
     }
 };

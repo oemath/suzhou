@@ -102,7 +102,8 @@
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
     <script>window.jQuery || document.write('<script src="/local/jquery.min.js"><\/script>')</script>
-
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+    
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
 	<script>if(typeof($.fn.modal) === 'undefined') {document.write('<script src="/local/bootstrap.min.js"><\/script>')}</script>
     <script>
@@ -201,9 +202,7 @@
 	    </div>
 	
 		<p id="prob-info">&nbsp;</p>
-	    <!--button class="btn oemath-btn-color" style="margin-top:20px; margin-left: 10px; width:100px; float:right" onclick="onclickSaveAndNext()">Save&nbsp;&gt;&gt;</button-->
 	    <button class="btn oemath-btn-color" style="margin-top:20px; margin-left: 10px; width:100px; float:right" onclick="onclickSave()">Save</button>
-	    <!--button class="btn oemath-btn-color" id="oemathid-btn-get" style="margin-top:20px; width:100px; float:right" onclick="onclickGet()">Get</button-->
 	    <button id="oemath-update-prev" class="btn oemath-btn-color" style="margin-top:20px; width:50px;" onclick="onclickPrev()">&lt;&lt;</button>
 	    <button id="oemath-update-next" class="btn oemath-btn-color" style="margin-top:20px; width:50px;" onclick="onclickNext()">&gt;&gt;</button>
 	    <button class="btn oemath-btn-color" style="margin-top:20px; margin-left: 15px; width:100px;" onclick="onclickNew()">New</button>
@@ -233,6 +232,12 @@
 		var curr_cid;
 		var curr_pid;
 		var curr_pid_index;
+
+		function saveStatus(grade, cid, pid) {
+			$.cookie('oemathcookie-grade', grade);
+			$.cookie('oemathcookie-cid', cid);
+			$.cookie('oemathcookie-pid', pid);
+		}
 		
 		function retrieve_and_show(action) {
 			var prob = gather_prob_data();
@@ -247,6 +252,7 @@
 		            if (data.status == "OK") {
 			            data.result.pid = prob.pid;
     		            handleGet(data.result);
+    		            saveStatus(prob.grade, prob.cid, prob.pid); // save status in cookie
 //    		            $("#prob-info").text("");
     		        }
     		        else {
@@ -263,8 +269,9 @@
 		}
 	
 		function onclickPrev() {
+			if (curr_pid_index == 0 ) return;
 			if (dirty) {
-				onclickSave();
+				if (!onclickSave()) return;
 			}
 			$('#prob-pid').val((pid_list[curr_pid_index-1]));
 			on_pid_change(pid_list[curr_pid_index-1]);
@@ -275,8 +282,9 @@
 			retrieve_and_show('curr');
 		}
 		function onclickNext() {
+			if (curr_pid_index == pid_list.length-1) return;
 			if (dirty) {
-				onclickSave();
+				if (!onclickSave()) return;
 			}
 			$('#prob-pid').val((pid_list[curr_pid_index+1]));
 			on_pid_change(pid_list[curr_pid_index+1]);
@@ -286,7 +294,7 @@
 
 		function onclickNew() {
 			if (dirty) {
-				onclickSave();
+				if (!onclickSave()) return;
 			}
 
 			var pid = 1;
@@ -311,15 +319,10 @@
 		}
 
 
-		function onclickSaveAndNext()
-		{
-			onclickSave();
-			onclickNext();
-		}
-		
 		function onclickSave() {
 			var prob = gather_prob_data();
 
+			var success = false;
 		    $.ajax({
 		        type: "post",
 		        url: "/insert/save",
@@ -341,6 +344,7 @@
 		            if (data.status == "OK") {
 						dirty = false;
 						$("#prob-info").text("Saved grade="+curr_grade+"; cid="+curr_cid+"; pid="+curr_pid);
+						success = true;
 //			            prob.pid = data.pid;
 	//		            $('#prob-pid').val(prob.pid);
 		            }
@@ -355,7 +359,8 @@
 		            $("#prob-info").text("/insert/save error:" + jqXHR+","+textStatus+","+errorThrown);
 		        },
 		    });
-
+		    if (!success) alert('Save failed!');
+			return success;
 		}
 
 
@@ -389,6 +394,11 @@
 			var problem = new Problem(raw_prob, 1); // 1: prob_index
 			problem.process();
 			showProblem(problem, '#preview-container', Phase.Review);
+			$('#oemathid-practice-submit').css('display','none');
+			$('#oemathid-practice-start-review').css('display','none');
+			$('#oemathid-practice-skip').css('display','none');
+			$('#oemathid-btn-refresh').css('display','none');
+			$('.oemathclass-title span').css('display', 'none');
 		}
 		
 		function onclickRefresh() {
@@ -523,11 +533,24 @@
     		}
 		}
 
+
+		function processInitCid()
+		{
+			var ck_cid = $.cookie('oemathcookie-cid');
+			if (ck_cid == undefined) return;
+			$('#prob-cid').val(ck_cid);
+			on_cid_change(ck_cid);
+			
+			var ck_pid = $.cookie('oemathcookie-pid');
+			if (ck_pid == undefined) return;
+	        $("#prob-pid").val(ck_pid);
+	        on_pid_change(ck_pid);
+		}
 		
-		function on_grade_change(new_grade)
+		function on_grade_change(new_grade, init)
 		{
 			if (dirty) {
-				onClickSave();
+				if (!onClickSave()) return;
 			}
 			
 		    $.ajax({
@@ -540,6 +563,9 @@
 			        if (data.status == "OK") {
 						curr_grade = new_grade;
 						process_categories(data.result);
+						if (init) {
+							processInitCid();
+						}
 			        }
 			        else {
 			            $("#prob-info").text("/insert/category FAILED("+data.error+"):" + jqXHR+","+textStatus);
@@ -558,7 +584,7 @@
 		function on_pid_change(new_pid)
 		{
 			if (dirty) {
-				onclickSave();
+				if (!onclickSave()) return;
 			}
 
 			if (parseInt(new_pid) < parseInt(curr_pid)) {
@@ -582,7 +608,7 @@
 		function on_cid_change(new_cid)
 		{
 			if (dirty) {
-				onclickSave();
+				if (!onclickSave()) return;
 			}
 			get_pids(curr_grade, new_cid);
 		}
@@ -604,21 +630,29 @@
 			$('#oemath-update-next').prop('disabled', true);
 			
 			dirty = false;
-	        $("#prob-grade").val(DEFAULT_GRADE);
-	        on_grade_change($("#prob-grade").val());
 
 	        $("#prob-grade").on("input", function () {
 	            on_grade_change($(this).val());
-	        });
-
-	        $("#prob-pid").on("input", function () {
-	            on_pid_change($(this).val());
 	        });
 
 	        $("#prob-cid").on("input", function () {
 	            on_cid_change($(this).val());
 	        });
 
+	        $("#prob-pid").on("input", function () {
+	            on_pid_change($(this).val());
+	        });
+
+			var ck_grade = $.cookie('oemathcookie-grade');
+			if (ck_grade != undefined) {
+		        $("#prob-grade").val(ck_grade);
+			}
+			else {
+		        $("#prob-grade").val(DEFAULT_GRADE);
+			}
+	        on_grade_change($("#prob-grade").val(), true);
+
+	        
 	        $(".oemath-input-catch").on("input", function () {
 				refresh_input_to_preview_dirty();
 		    });
@@ -628,6 +662,30 @@
 			    if(typeof(p) !== 'undefined') {
 		    	    $("#prob-info").text((event.pageX-p.left) + ", " + (event.pageY-p.top));
 			    }
+		    });
+
+		    $(window).keydown(function(event) {
+		    	if(event.ctrlKey) {
+			    	if (event.key=='s') {
+			    		onclickSave();
+			    	}
+			    	else if (event.key=='.') { //>
+			    		onclickNext();
+			    	}
+			    	else if (event.key==',') { //<
+			    		onclickPrev();
+			    	}
+			    	else if (event.key=='q') { //q: refresh
+			    		onclickRefresh();
+			    	}
+			    	else {
+				    	return true;
+			    	}
+
+			    	event.preventDefault();
+			        return false;
+		    	}
+		    	return true;
 		    });
 		});
 		

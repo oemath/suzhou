@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<title>oemath | {% block title %}{% endblock %}</title>
+	<title>oemath - Build for Math Contest | {% block title %}{% endblock %}</title>
     
     <!-- Latest compiled and minified CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
@@ -30,11 +30,16 @@
     {% if practice_css %}
     	<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     {% endif %}
+    <script src="https://use.fontawesome.com/787db97226.js"></script>
 <div id="oemathid-page-container">
-<div id="oemathid-page-navigation">{% include 'templates/partials/navigation.php' %}</div>
-<div id="oemathid-page-message">{% include 'templates/partials/messages.php' %}</div>
-<div id="oemathid-page-content">{% block content %}{% endblock %}</div>
-<div id="oemathid-page-footer">{% include 'templates/partials/footer.php' %}</div>
+	<div id="oemathid-page-navigation">{% include 'templates/partials/navigation.php' %}</div>
+	{% include 'templates/partials/messages.php' %}
+	
+	{% if current_page == 'home' %}
+	<div id="oemathid-content-carousel">{% include 'templates/partials/carousel.php' %}</div>
+	{% endif %}
+	<div id="oemathid-page-content">{% block content %}{% endblock %}</div>
+	<div id="oemathid-page-footer">{% include 'templates/partials/footer.php' %}</div>
 </div>
 </body>
 </html>

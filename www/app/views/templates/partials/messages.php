@@ -1,3 +1,5 @@
 {% if flash.global %}
-	<div class="global">{{ flash.global }}</div>
+<div id="oemathid-page-message">
+<span>{{ flash.global }}</span>
+</div>
 {% endif %}

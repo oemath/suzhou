@@ -37,7 +37,7 @@ $(function(){
 	
 });
 </script>
-<h1 id="oemathid-math-pick"></h1>
-<div id="oemathid-content-math-container"></div>
+<p id="oemathid-math-pick" class="oemathclass-title"></p>
+<div id="oemathid-content-math-container" class="oemathclass-font-gothic"></div>
 
 {% endblock %}

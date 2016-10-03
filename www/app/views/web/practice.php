@@ -8,7 +8,7 @@
 <script src="http://threejs.org/examples/js/controls/TrackballControls.js"></script>
 
 <div>
-<h1><a href="/math?grade={{grade}}" style="color:green">Grade {{grade}}</a> - {{title}}</h1>
+<p class="oemathclass-title"><a href="/math?grade={{grade}}" style="color:green;text-decoration:none;">Grade {{grade}}</a><span style="color:black"> - {{title}}</span></p>
 <div id="oemathid-reviewbtn-container" style="margin-top:20px">
 	<div class="btn-group" role="group" aria-label="...">
 		{% for i in 0..count-1 %}

@@ -19,7 +19,7 @@ $(function(){
 		value: [1, 2, 3, 4, 5, 6, 7, 8, 9]
 	};
 
-	var child = '<div>';
+	var child = '<div class="oemathclass-font-gothic">';
 	for (var i=0; i < content_grade.title.length; i++) {
 		var opacity = content_grade.active[i]?'':'opacity:0.3;';
 		var active = content_grade.active[i]?'':'oemathclass-inactive';
@@ -38,8 +38,6 @@ $(function(){
 	
 });
 </script>
-<div id="oemathid-content-banner-container">
-</div>
 
 <div id="oemathid-content-grade-container"></div>
 {% endblock %}

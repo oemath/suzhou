@@ -74,6 +74,14 @@ var Problem = (function () {
             'per1': '  <b>Express your answer to the nearest tenth of a percent.</b>',
             'per2': '  <b>Express your answer to the nearest hundredth of a percent.</b>',
             'sci': '  <b>Express your answer in scientific notation.</b>',
+            'pi': '  <b>Use &pi; as 3.14.</b>',
+            'pi0': '  <b>Use &pi; as 3.14 and express your answer to the nearest integer.</b>',
+            'pi1': '  <b>Use &pi; as 3.14 and express your answer to the nearest tenth.</b>',
+            'pi2': '  <b>Use &pi; as 3.14 and express your answer to the nearest hundredth.</b>',
+            'mul': '  <b>This question has more than one correct answers, you only need to provide one of them.</b>',
+            'LCM': "<a class=\"oemathclass-tooltip\" data-toggle=\"tooltip\" data-html=\"true\" title=\"Least Common Multiple\">LCM</a>",
+            'GCD': '<a class="oemathclass-tooltip" data-toggle="tooltip" data-html="true" title="Greatest Common Divisor, a.k.a GCF (Greatest Common Factor)">GCD</a>',
+            'yard': '<a class="oemathclass-tooltip" data-toggle="tooltip" data-html="true" title="1 mile = 1760 yards.  1 yard = 0.000568182 miles">yard</a>',
         };
         this.index = index;
         this.type = prob.type;
@@ -107,12 +115,75 @@ var Problem = (function () {
         catch (e) {
         }
     };
+    // compare two strings.  special process for number comparison
+    Problem.prototype.same = function (a, b) {
+        var acomma = 0;
+        var anum = true;
+        for (var i = 0; i < a.length && anum; i++) {
+            if (a.charAt(i) == '.') {
+                if (++acomma > 1)
+                    anum = false;
+            }
+            else if (a.charAt(i) < '0' || a.charAt(i) > '9')
+                anum = false;
+        }
+        var bcomma = 0;
+        var bnum = true;
+        for (var i = 0; i < b.length && bnum; i++) {
+            if (b.charAt(i) == '.') {
+                if (++bcomma > 1)
+                    bnum = false;
+            }
+            else if (b.charAt(i) < '0' || b.charAt(i) > '9')
+                bnum = false;
+        }
+        if (!anum || !bnum)
+            return a == b;
+        var idx;
+        // remove leading 0's from a
+        for (idx = 0; idx < a.length && a.charAt(idx) == '0'; idx++)
+            ;
+        if (idx < a.length) {
+            if (a.charAt(idx) == '.') {
+                a = "0" + a.substring(idx);
+            }
+            else {
+                a = a.substring(idx);
+            }
+        }
+        if (acomma == 1) {
+            var i = void 0;
+            for (i = a.length - 1; a.charAt(i) == '0' || a.charAt(i) == '.'; i--)
+                ;
+            if (i < a.length - 1)
+                a = a.substring(0, i + 1);
+        }
+        // remove leading 0's from b
+        for (idx = 0; idx < b.length && b.charAt(idx) == '0'; idx++)
+            ;
+        if (idx < b.length) {
+            if (b.charAt(idx) == '.') {
+                b = "0" + b.substring(idx);
+            }
+            else {
+                b = b.substring(idx);
+            }
+        }
+        if (bcomma == 1) {
+            var i = void 0;
+            for (i = b.length - 1; b.charAt(i) == '0' || b.charAt(i) == '.'; i--)
+                ;
+            if (i < b.length - 1)
+                b = b.substring(0, i + 1);
+        }
+        return a == b;
+    };
     Problem.prototype.evalLiteral = function (entered, expected) {
         entered = entered.replace(/\s/g, '').toLowerCase();
         var candidates = expected.split(';;');
         for (var i = 0; i < candidates.length; i++) {
             candidates[i] = candidates[i].replace(/\s/g, '').toLowerCase();
-            if (candidates[i].length > 0 && entered == candidates[i]) {
+            if (candidates[i].length > 0 && this.same(entered, candidates[i])) {
                 return true;
             }
         }
@@ -122,26 +193,75 @@ var Problem = (function () {
     // Parse parameters - Start
     /////////////////////////////////////////////////
     Problem.prototype.generateValue = function (parameter) {
+        var ex = parameter.indexOf('|');
+        var eList = [];
+        if (ex > 0) {
+            var el = parameter.substring(ex + 1).trim().split(',');
+            for (var i = 0; i < el.length; i++) {
+                var temp = this.eval(el[i]);
+                if (temp != undefined && !isNaN(temp)) {
+                    eList.push(temp);
+                }
+            }
+            parameter = parameter.substring(0, ex);
+        }
         if (parameter.indexOf('-') > 0) {
             var range = parameter.trim().split('-');
             var first = this.eval(range[0]);
             var last = this.eval(range[1]);
-            return first + oe.rand(last - first + 1);
+            var rtn = void 0;
+            var nan = 1000;
+            for (; nan > 0; nan--) {
+                rtn = first + oe.rand(last - first + 1);
+                if (-1 == $.inArray(rtn, eList))
+                    break;
+            }
+            if (nan == 0) {
+                for (rtn = first; rtn <= last; rtn++) {
+                    if (-1 == $.inArray(rtn, eList))
+                        break;
+                }
+                if (rtn > last)
+                    rtn = NaN;
+            }
+            return rtn;
         }
         else {
             var enum_list = parameter.split(',');
-            return this.eval(enum_list[oe.rand(enum_list.length)]);
+            var rtn = void 0;
+            var nan = 1000;
+            for (; nan > 0; nan--) {
+                rtn = this.eval(enum_list[oe.rand(enum_list.length)]);
+                if (-1 == $.inArray(rtn, eList))
+                    break;
+            }
+            if (nan == 0) {
+                rtn = NaN;
+                for (var i = 0; i < enum_list.length; i++) {
+                    if (-1 == $.inArray(this.eval(enum_list[i]), eList)) {
+                        rtn = this.eval(enum_list[i]);
+                        break;
+                    }
+                }
+            }
+            return rtn;
         }
     };
     Problem.prototype.evalRandom = function (parameter) {
-        while (true) {
-            var start = parameter.indexOf('{{');
-            if (start < 0)
-                break;
-            var end = parameter.indexOf('}}', start + 2);
-            var rand_result = this.generateValue(parameter.substr(start + 2, end - start - 2));
-            parameter = parameter.substr(0, start) + rand_result + parameter.substr(end + 2);
-        }
+        /*        while (true) {
+                    var start = parameter.indexOf('{{');
+                    if (start < 0) break;
+        
+                    var end = parameter.indexOf('}}', start + 2);
+                    if (end < 0) break;
+                    var rand_result = this.generateValue(parameter.substr(start + 2, end - start - 2));
+                    parameter = parameter.substr(0, start) + rand_result + parameter.substr(end + 2);
+                }*/
+        parameter = parameter.replace(/{{(.*?)}}/g, (function (thisObj) {
+            return function (m, $1) {
+                return "" + thisObj.generateValue($1);
+            };
+        })(this));
         return parameter;
     };
     Problem.prototype.parseParameterMap = function () {
@@ -156,13 +276,14 @@ var Problem = (function () {
                 value = parameter.substr(eql + 1).trim();
             }
             value = this.replaceKnownParameters(value).replace(/[\r\n]/g, '');
+            value = this.replaceEval(value);
             value = this.evalRandom(value);
             if (!(name_1 == 'ans' && (this.type == ProblemType.Function ||
                 this.type == ProblemType.InlineFunction ||
                 this.type == ProblemType.TrueFalse ||
                 this.type == ProblemType.Radio ||
                 this.type == ProblemType.Checkbox))) {
-                value = "" + this.eval(value);
+                value = (value.indexOf('undefined') < 0) ? "" + this.eval(value) : 'undefined';
             }
             this.value_map[("<" + name_1 + ">")] = value;
         }
@@ -572,6 +693,7 @@ var Problem = (function () {
         return html;
     };
     Problem.prototype.generateHintHtml = function () {
+        this.htmlHint = '';
         if (!this.hint)
             return;
         var mul_hints = this.hint.split('$$$');
@@ -593,35 +715,13 @@ var Problem = (function () {
         }
         this.htmlHint +=
             "</div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Close</button></div></div></div></div>";
-        /*
-        let hints: string[] = this.hint.split('$$');
-
-        this.htmlHint =
-`<div class="modal" id="oemathid-hintsModal" role="dialog"><div class="modal-dialog">\
-<div class="modal-content">\
-<div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button>\
-<h4 class="modal-title">Hints</h4></div>\
-<div class="modal-body oemathclass-hintmodal">\
-<div><p>${hints[0]}</p>`;
-        for (let i: number = 1; i < hints.length; i++) {
-            this.htmlHint += `<div style="display:none" id="hint${i}"><hr><p>${hints[i]}</p></div>`;
-        }
-
-        if (hints.length > 1) {
-            this.htmlHint += `<a style="cursor:pointer" onclick= "onClickMoreHints()" id= 'oemathid-hintbtn' status= 0 last=${hints.length-1} >Show more hints</a>`;
-        }
-
-        this.htmlHint +=
-`</div></div><div class="modal-footer">\
-<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>\
-</div></div></div></div>`;*/
     };
     Problem.prototype.generateHtmls = function () {
         this.htmlBase =
-            "<div id=\"oemathid-question-html\"><hr/><div class=\"oemathclass-practice-title\" style=\"height:60px;\"><span style=\"display:inline-block;float:left;font-size:36px;\">Question</span>";
+            "<div id=\"oemathid-question-html\"><hr/><div class=\"oemathclass-title\" style=\"height:60px;\"><span style=\"display:inline-block;float:left;color:green;\">Question</span>";
         if (this.hint) {
             this.htmlBase +=
-                "<input type=\"image\" data-toggle=\"modal\" data-target=\"#oemathid-hintsModal\" style=\"display:inline-block;float:right;outline:none\" border=\"0\" title=\"Need some hint?\" alt=\"hint\" src=\"/img/hint.png\" width=\"32\" height=\"32\">";
+                "<input type=\"image\" data-toggle=\"modal\" data-target=\"#oemathid-hintsModal\" style=\"display:inline-block;float:right;outline:none\" border=\"0\" title=\"Need some hint?\" alt=\"hint\" src=\"/img/page/hint.png\" width=\"32\" height=\"32\">";
         }
         this.htmlBase +=
             "</div><div id=\"oemathid-practice-question\" class=\"oemathclass-practice-question " + (this.flag == 1 ? "oemathclass-mathjax" : "") + "\">" + this.question + "</div><div class=\"form-inline\" style=\"width:100%\">";
@@ -680,9 +780,12 @@ var Problem = (function () {
         html += this.htmlClosing;
         //html = "<p id='xxxtestxxx'>HELLO!!!</p>" + html;
         $(id).empty().append(html);
-        /*    if (MathJax) {
-                MathJax.Hub.Queue(["Typeset", MathJax.Hub, ".oemathclass-mathjax"], function () { $('.oemathclass-mathjax').css("visibility", "visible"); });
-            }*/
+        if (MathJax != undefined) {
+            MathJax.Hub.Queue(["Typeset", MathJax.Hub, ".oemathclass-mathjax"], function () { $('.oemathclass-mathjax').css("visibility", "visible"); });
+        }
+        else {
+            $('.oemathclass-mathjax').css("visibility", "visible");
+        }
         this.fillEntered(this.entered);
         if (phase == Phase.Practice) {
             $(id + " input[index=0]").focus();
@@ -693,7 +796,7 @@ var Problem = (function () {
         }
         //        $("#xxxtestxxx").text("Hello, world!!");
     };
-    Problem.prototype.preprocess = function () {
+    Problem.prototype.postprocess = function () {
         var question = this.question;
         var parameter = this.parameter;
         var hint = this.hint;
@@ -713,16 +816,24 @@ var Problem = (function () {
         this.parameter = parameter;
         this.hint = hint;
     };
+    Problem.prototype.replaceEval = function (str) {
+        str = str.replace(/<\?(.*?)\?>/g, function (m, $1) {
+            return this.eval($1);
+        });
+        return str;
+    };
     Problem.prototype.process = function () {
-        this.preprocess(); // replace abbr. like <.bb> in question, parameter and hint.
         this.parseParameterMap();
-        this.parameter = this.replaceKnownParameters(this.parameter);
-        this.parameter = this.replaceOemathTags(this.parameter);
+        //        this.parameter = this.replaceKnownParameters(this.parameter);
+        //        this.parameter = this.replaceOemathTags(this.parameter);
         this.processAnswerType();
         this.question = this.replaceKnownParameters(this.question);
+        this.question = this.replaceEval(this.question);
         this.question = this.replaceOemathTags(this.question);
         this.hint = this.replaceKnownParameters(this.hint);
+        this.hint = this.replaceEval(this.hint);
         this.hint = this.replaceOemathTags(this.hint);
+        this.postprocess(); // replace abbr. like <.bb> in question, parameter and hint.
         this.generateHtmls();
         this.entered = new Array(this.inputCount);
         this.entered_wrong = null;

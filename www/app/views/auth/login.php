@@ -11,27 +11,35 @@ $(function() {
 });
 </script>
 
-<form class="form-group" style="width:300px" action="{{ urlFor('login.post') }}" method="post" autocomplete="off">
-	<div>
-		<label for="identifier">Username/Email</label>
-		<input class="form-control" type="text" name="identifier" id="identifier" placeholder="Username/Email">
-		{% if errors.has('identifier') %} {{ errors.first('identifier') }} {% endif %}
-	</div>
 
-	<div>
-		<label for="password">Password</label>
+<div class="container">
+  <div class="row">
+    <div class="col-xs-12 col-sm-6">
+<form class="oemathclass-faform form-group" style="width:90%" action="{{ urlFor('login.post') }}" method="post" autocomplete="off">
+	<h3>Please sign in:</h3>
+	<div class="input-group margin-bottom-sm">
+	    <span class="input-group-addon"><i class="fa fa-user fa-fw"></i></span>
+		<input class="form-control" type="text" name="identifier" id="identifier" placeholder="Username/Email address">
+	</div>
+	{% if errors.has('identifier') %}
+	<p class="oemathclass-form-wrong">{{ errors.first('identifier') }}</p>
+	{% endif %}
+
+	<div class="input-group margin-bottom-sm">
+	  <span class="input-group-addon"><i class="fa fa-key fa-fw"></i></span>
 		<input class="form-control" type="password" name="password" id="password" placeholder="Password">
-		{% if errors.has('password') %} {{ errors.first('password') }} {% endif %}
+	</div>
+	{% if errors.has('password') %}
+	<p class="oemathclass-form-wrong">{{ errors.first('password') }}</p>
+	{% endif %}
+
+	<div>
+		<input class="form-check-input" type="checkbox" name="remember" id="remember">
+		<label class="form-check-label" for="remember">Remember me</label>
 	</div>
 
 	<div>
-		<input type="checkbox" name="remember" id="remember">
-		<label for="remember">Remember me</label>
-	</div>
-	
-
-	<div>
-		<input type="submit" value="Login">
+		<input type="submit" class="btn btn-success" value="Log in">
 	</div>
 	
 	
@@ -39,5 +47,9 @@ $(function() {
 	
 	<input type="hidden" name="{{ csrf_key }}" value="{{ csrf_token }}">
 </form>
-
+</div>
+    <div class="col-xs-12 col-sm-6">
+    <h3>Join oemath membership to get full access ot thousands of questions!</h3>
+    </div>
+</div></div>
 {% endblock %}
