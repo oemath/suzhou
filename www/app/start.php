@@ -16,6 +16,8 @@ use Oemath\Mail\Mailer;
 
 use Oemath\Models\Category;
 
+use Oemath\Models\OeLogger;
+
 use Oemath\Middleware\BeforeMiddleware;
 use Oemath\Middleware\CsrfMiddleware;
 
@@ -38,6 +40,8 @@ $app->add(new CsrfMiddleware);
 $app->configureMode($app->config('mode'), function() use ($app) {
     $app->config = Config::load(INC_ROOT . "/app/config/{$app->mode}.php");
 });
+
+$app->log = new OeLogger($app);
 
 require 'database.php';
 require 'filters.php';

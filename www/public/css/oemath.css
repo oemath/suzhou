@@ -4,6 +4,7 @@ body{
 	padding-top: 50px;
     margin: 0 auto;
     max-width: 1000px;
+    min-height:960px;
 }
 
 .oemathclass-font-gothic{
@@ -16,8 +17,6 @@ body{
   -webkit-border-radius: 0 !important;
      -moz-border-radius: 0 !important;
           border-radius: 0 !important;
-	margin-bottom: 0;
-	font-size:18px;
 }
 
 .width100{ width: 100px; }

@@ -9,19 +9,10 @@
 		<div class="collapse navbar-collapse">
 			<ul id="oemathid-navbar-ul" class="nav navbar-nav sm">
 				<li id="oemathid-navbar-home"><a href="{{ urlFor('home') }}" class="oemathclass-navbar">Home</a></li>
-				<li id="oemathid-navbar-account"  
 				{% if auth %}
-				class="dropdown"
-				{% else %}
-				class="dropdown disabled"
-				{% endif %}
-				">
+				<li id="oemathid-navbar-account" class="dropdown">
 					<a href="#" class="has-submenu"
-					{% if auth %}
 					class="dropdown-toggle oemathclass-navbar" 
-					{% else %}
-					class="disabled dropdown-toggle oemathclass-navbar" 
-					{% endif %}
 					data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Account</a>
 					<ul class="dropdown-menu">
 			    		<!-- <li><a href="{{urlFor('user.profile', { username: auth.username }) }}">Profile</a></li> -->
@@ -29,6 +20,7 @@
 			    		<li><a href="{{ urlFor('password.change') }}">Change password</a></li>
 			        </ul>
 				</li>
+				{% endif %}
 				<li id="oemathid-navbar-about" ><a href="{{ urlFor('about') }}" class="oemathclass-navbar">About</a></li>
 				{% if auth %}
 				<li id="oemathid-navbar-membership"><a href="{{ urlFor('membership') }}" class="oemathclass-navbar" style="color:green;font-weight:bold;width:136px;">Membership</a></li>

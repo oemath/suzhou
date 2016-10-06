@@ -4,7 +4,7 @@ use Oemath\Models\Category;
 use Oemath\Models\Problem;
 use Illuminate\Database\Capsule\Manager as DB;
 
-require_once 'helper.php';
+require_once INC_ROOT . '/app/helpers/helper.php';
 
 $app->get('/insert/category', function() use ($app) {
     $json = array();

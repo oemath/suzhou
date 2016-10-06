@@ -22,35 +22,49 @@ var Practice = (function () {
         this.phase = Phase.Practice;
         this.container = '#oemathid-question-container';
     }
-    Practice.prototype.ajaxNextProblem = function () {
-        var problem = null;
+    Practice.prototype.ajaxNextProblem = function (cbSuccess, cbFail, cbTimeout) {
         var data = { grade: this.grade, category: this.category, index: this.problems.length, token: this.token };
         data[csrf_key] = csrf_token;
+        //$('#loading-indicator').css("left", $(window).width() / 2 - 120).css("top", $(this.container).offset().top + 120).show();
         $.ajax({
             type: "post",
             url: "/api/problem",
             data: data,
             dataType: "json",
-            async: false,
+            async: true,
             success: (function (thisObj) {
                 return function (data, textStatus, jqXHR) {
                     if (data.status == 'OK') {
-                        problem = new Problem(data.result, thisObj.problems.length);
+                        var problem = new Problem(data.result, thisObj.problems.length);
                         problem.process();
+                        thisObj.problems.push(problem);
+                        thisObj.enable(problem.index);
+                        thisObj.setColorSkipped(problem.index);
+                        //$('#loading-indicator').hide();
+                        cbSuccess(problem);
                     }
-                    else {
+                    else if (cbFail) {
+                        cbFail();
                     }
                 };
             })(this),
             error: function (jqXHR, textStatus, errorThrown) {
+                $('#oemathid-dialog-nextproblem-error').show();
+                //$('#oemathid-dialog-congrat').show();
+                if (cbTimeout) {
+                    cbTimeout();
+                }
+                // fired when timeout
             },
+            timeout: 1000 // set timeout to 30 seconds.
         });
-        if (problem) {
-            this.problems.push(problem);
-            this.enable(problem.index);
-            this.setColorSkipped(problem.index);
-        }
-        return problem;
+        /*        if (problem) {
+                    this.problems.push(problem);
+                    this.enable(problem.index);
+                    this.setColorSkipped(problem.index);
+                }
+        
+                return problem;*/
     };
     Practice.prototype.setTextColorWrong = function (index) { $("#oemathid-reviewbtn-" + index).css("color", "red"); };
     Practice.prototype.setColor = function (index, color) { $("#oemathid-reviewbtn-" + index).css("background-color", color); };
@@ -73,9 +87,17 @@ var Practice = (function () {
         if (!nextProblem) {
             // If NOT all problems have been seen.
             if (this.problems.length < this.count) {
-                nextProblem = this.ajaxNextProblem();
-                if (!nextProblem) {
-                }
+                this.ajaxNextProblem(function (thisObj) {
+                    return function (problem) {
+                        if (problem.index != thisObj.current) {
+                            thisObj.showProblem(problem);
+                        }
+                    };
+                }(this), function () {
+                    //fail
+                }, function () {
+                    // timeout
+                });
             }
             else {
                 // Search from beginning for skipped.
@@ -95,13 +117,14 @@ var Practice = (function () {
                     }
                 }
                 if (!nextProblem) {
-                    alert("Congratulations!");
-                    this.onclickStartReview();
+                    //alert("Congratulations!");
+                    //this.onclickStartReview();
+                    $('#oemathid-dialog-congrat').show();
                     return;
                 }
             }
         }
-        if (nextProblem.index != this.current) {
+        if (nextProblem != null && nextProblem.index != this.current) {
             this.showProblem(nextProblem);
         }
     };
@@ -171,6 +194,10 @@ var Practice = (function () {
     return Practice;
 }());
 var practice = new Practice(grade, category, count, token);
+function startReview() {
+    $('#oemathid-dialog-congrat').hide();
+    practice.onclickStartReview();
+}
 $(function () {
     $(document).keypress(function (e) {
         if (e.which == 13) {
@@ -180,9 +207,14 @@ $(function () {
         }
     });
     //    $(window).bind('beforeunload', function () { return 'Are you sure to finish the practice?'; });
-    var problem = practice.ajaxNextProblem();
-    if (problem) {
-        practice.showProblem(problem);
-    }
+    practice.ajaxNextProblem(function (problem) {
+        if (problem) {
+            practice.showProblem(problem);
+        }
+    }, function () {
+        // error handling
+    }, function () {
+        // timeout
+    });
 });
 //# sourceMappingURL=Practice.js.map

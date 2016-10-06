@@ -47,39 +47,53 @@ class Practice {
     }
 
 
-    public ajaxNextProblem(): Problem {
-        let problem: Problem = null;
-
+    public ajaxNextProblem(cbSuccess: any, cbFail?: any, cbTimeout?: any): void {
         let data = { grade: this.grade, category: this.category, index: this.problems.length, token: this.token };
         data[csrf_key] = csrf_token;
+
+        //$('#loading-indicator').css("left", $(window).width() / 2 - 120).css("top", $(this.container).offset().top + 120).show();
 
         $.ajax({
             type: "post",
             url: "/api/problem",
             data: data,
             dataType: "json",
-            async: false,
+            async: true,
             success: (function (thisObj) {
                 return function (data, textStatus, jqXHR) {
                     if (data.status == 'OK') {
-                        problem = new Problem(data.result, thisObj.problems.length);
+                        let problem: Problem = new Problem(data.result, thisObj.problems.length);
                         problem.process();
+
+                        thisObj.problems.push(problem);
+                        thisObj.enable(problem.index);
+                        thisObj.setColorSkipped(problem.index);
+                        //$('#loading-indicator').hide();
+                        cbSuccess(problem);
                     }
-                    else {
+                    else if (cbFail) {
+                        cbFail();
                     }
                 };
             })(this),
             error: function (jqXHR, textStatus, errorThrown) {
+                $('#oemathid-dialog-nextproblem-error').show();
+                //$('#oemathid-dialog-congrat').show();
+                if (cbTimeout) {
+                    cbTimeout();
+                }
+                // fired when timeout
             },
+            timeout: 1000 // set timeout to 30 seconds.
         });
 
-        if (problem) {
+/*        if (problem) {
             this.problems.push(problem);
             this.enable(problem.index);
             this.setColorSkipped(problem.index);
         }
 
-        return problem;
+        return problem;*/
     }
 
 
@@ -96,6 +110,7 @@ class Practice {
 
     private findNextProblem() {
         let nextProblem: Problem = null;
+
         // Search to the end for skipped.
         for (let i = this.current + 1; i < this.problems.length; i++) {
             if (this.problems[i].status == Answer.Incomplete) {
@@ -107,10 +122,21 @@ class Practice {
         if (!nextProblem) { // No skipped to the end.
             // If NOT all problems have been seen.
             if (this.problems.length < this.count) {
-                nextProblem = this.ajaxNextProblem();
-                if (!nextProblem) {
-                    // error handling.
-                }
+                this.ajaxNextProblem(
+                    function (thisObj) {
+                        return function (problem: Problem) {
+                            if (problem.index != thisObj.current) {
+                                thisObj.showProblem(problem);
+                            }
+                        };
+                    }(this),
+                    function () {
+                        //fail
+                    },
+                    function () {
+                        // timeout
+                    }
+                );
             }
             else { // All problems have been seen.
                 // Search from beginning for skipped.
@@ -132,16 +158,17 @@ class Practice {
                 }
 
                 if (!nextProblem) { // All problem finished as Correct!
-                    alert("Congratulations!");
-                    this.onclickStartReview();
+                    //alert("Congratulations!");
+                    //this.onclickStartReview();
+                    $('#oemathid-dialog-congrat').show();
                     return;
                 }
             }
         }
 
-        if (nextProblem.index != this.current) {
+        if (nextProblem != null && nextProblem.index != this.current) {
             this.showProblem(nextProblem);
-        }        
+        }
     }
 
 
@@ -224,6 +251,11 @@ class Practice {
 
 var practice: Practice = new Practice(grade, category, count, token);
 
+function startReview() {
+    $('#oemathid-dialog-congrat').hide();
+    practice.onclickStartReview();
+}
+
 $(function () {
 
     $(document).keypress(function (e) {
@@ -236,8 +268,17 @@ $(function () {
 
 //    $(window).bind('beforeunload', function () { return 'Are you sure to finish the practice?'; });
 
-    let problem: Problem = practice.ajaxNextProblem();
-    if (problem) {
-        practice.showProblem(problem);
-    }
+    practice.ajaxNextProblem(
+        function (problem: Problem) {
+            if (problem) {
+                practice.showProblem(problem);
+            }
+        },
+        function () {
+            // error handling
+        },
+        function () {
+            // timeout
+        });
+
 });

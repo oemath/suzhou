@@ -74,7 +74,6 @@ class Problem
             return array_map(function($a) { return $a->id; }, $problems);
         }
         catch ( \Illuminate\Database\QueryException $e) {
-var_dump($e);            
         	return null;
         }        
     }

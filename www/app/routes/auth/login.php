@@ -3,7 +3,8 @@
 use Carbon\Carbon;
 
 $app->get('/login', $guest(), function() use($app) {
-    $app->render('auth/login.php');
+    $app->log->info('login_page');
+	$app->render('auth/login.php');
 })->name('login');
 
 $app->post('/login', $guest(), function() use($app) {
@@ -46,11 +47,13 @@ $app->post('/login', $guest(), function() use($app) {
                         Carbon::parse('+6 month')->timestamp);
             }
             
+    		$app->log->info('login');
             $app->flash('global', 'You are now signed in!');
             return $app->response->redirect($app->urlFor('home'));
         }
         else {
-            $app->flash('global', 'Could not log you in!');
+    		$app->log->error('login_fail');
+        	$app->flash('global', 'Could not log you in!');
             return $app->response->redirect($app->urlFor('login'));
         }
 

@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="/css/oemath.css">
 </head>
 <body>
+<!-- img src="/img/page/loading.png" id="loading-indicator" style="display:none;left:200px;position:absolute;top:140px;" /-->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
     <script>window.jQuery || document.write('<script src="/local/jquery.min.js"><\/script>')</script>
 
@@ -28,6 +29,8 @@
       $("head").prepend('<link rel="stylesheet" href="/local/bootstrap.min.css">');}});
     </script>
     {% if practice_css %}
+    	<!-- hiding typesetting status bar -->
+        <script type="text/x-mathjax-config">MathJax.Hub.Config({messageStyle: "none"});</script> 
     	<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     {% endif %}
     <script src="https://use.fontawesome.com/787db97226.js"></script>

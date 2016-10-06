@@ -21,6 +21,11 @@ class User extends Eloquent
         'recover_hash'
     ];
     
+    public function getUsername()
+    {
+        return $this->username;
+    }
+    
     public function getRealnameOrUsername()
     {
         if ($this->realname) {

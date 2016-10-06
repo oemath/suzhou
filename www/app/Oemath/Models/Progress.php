@@ -16,13 +16,23 @@ class Progress
                  where uid = {$uid} and grade={$grade} and category={$category}");
         
         if ($exist) {
-            DB::update("update ". self::$table ." set 
-                        start = {$start},
-                        failure = '{$failure}'
-                        where uid = {$uid} and grade={$grade} and category={$category}");
+        	if (null === $start) {
+        		DB::update("update ". self::$table ." set
+        				failure = '{$failure}'
+        				where uid = {$uid} and grade={$grade} and category={$category}");
+       		}
+        	else {
+	            DB::update("update ". self::$table ." set 
+	                        start = {$start},
+	                        failure = '{$failure}'
+	                        where uid = {$uid} and grade={$grade} and category={$category}");
+        	}
             return 'update';
         }
         else {
+        	if (null === $start) {
+        		$start = 1;
+        	}
             DB::insert("insert into ". self::$table. " (uid, grade, category, start, failure) values (?, ?, ?, ?, ?)", 
             [$uid, $grade, $category, $start, $failure]);
             return 'insert';
