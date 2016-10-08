@@ -1,7 +1,5 @@
 <?php
 
-use Oemath\User\UserPermission;
-
 $app->get('/register', $guest(), function() use ($app) {
     $app->render('auth/register.php');    
 })->name('register');
@@ -25,17 +23,16 @@ $app->post('/register', $guest(), function() use ($app) {
     
     if ($v->passes()) {
         $identifier = $app->randomlib->generateString(128);
+        $salt = $app->randomlib->generateString(32);
         
         $user = $app->user->create([
                 'email' => $email,
                 'username' => $username,
-                'password' => $app->hash->password($password),
-                'salt' => 'default_salt',
+                'password' => $app->hash->password($password.'+'.$salt),
+                'salt' => $salt,
                 'active' => false,
                 'active_hash' => $app->hash->hash($identifier),
         ]);
-        
-        $user->permissions()->create(UserPermission::$defaults);
         
         $app->mail->send('email/auth/register.php', [
                         'user' => $user,

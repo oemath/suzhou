@@ -8,12 +8,22 @@ class User extends Eloquent
 {
     protected $table = 'users';
     
+    private static $MembershipBits = 0x02;
+    private static $AdminBit = 0x80;
+    
+    public static $MembershipNone = 0;
+    public static $MembershipValid = 1;
+    
     protected $fillable = [
         'email',
         'username',
         'realname',
         'password',
         'salt',
+    	// last 1 bits: 0: non-membership; 1: membership
+    	// bit 7: 80: admin; 00: others
+    	'flag',
+    	'membership', // membership valid until date
         'active',
         'active_hash',
         'remember_identifier',
@@ -57,19 +67,29 @@ class User extends Eloquent
         $this->updateRememberCredentials(null, null);
     }
     
-    public function hasPermission($permission)
-    {
-        return (bool) $this->permissions->{$permission};
-    }
-    
     public function isAdmin()
     {
-        return $this->hasPermission('is_admin');
+        return (bool) ($this->flag & self::$AdminBit);
+    }
+
+    public function membershipStatus()
+    {
+    	return (int) $this->flag & self::$MembershipBits;
     }
     
-    public function permissions()
+    public function membershipNone()
     {
-        return $this->hasOne('Oemath\User\UserPermission', 'user_id');
+    	return (bool) ($this->flag & self::$MembershipBits == self::$MembershipNone);
+    }
+
+    public function membershipValid()
+    {
+    	return (bool) (date('Y-m-d') <= $this->membership);
+    }
+    
+    public function membershipExpirationDate()
+    {
+    	return $this->membership;
     }
 }
 

@@ -5,8 +5,9 @@ use Oemath\Models\Problem;
 
 function getProblemCount($user)
 {
-	// TODO:
-	return 20;
+	if (null === $user || !$user) return 5;
+	if ($user->membershipValid()) return 20;
+	return 10;
 }
 
 function setSessionVar($app, $key, $value)
@@ -45,7 +46,7 @@ function cleanupFailure($app, $grade, $cid)
 	}
 	
 	$app->log->info('cleanupFailure?u='.$app->auth->id.'&g='.$grade.'&c='.$cid);
-	Progress::update($app->auth->id, $grade, cid, null, null);
+	Progress::update($app->auth->id, $grade, $cid, null, null);
 }
 
 
@@ -57,18 +58,22 @@ function getProblemIds($app, $grade, $cid)
 function initProblemIds($app, $grade, $cid)
 {
 	$failure = array();
-
+	$start = 1;
+	
 	if ($app->auth) {
 		$progress = Progress::select($app->auth->id, $grade, $cid);
 		if ($progress) {
 			$start = $progress->start;
 			$failure = $progress->failure;
+			if (null === $failure) {
+				$failure = array();
+			}
 			$app->log->info('progress:s='.$start.'&f='.implode(',', $failure));
 		}
 	}
 	
 	$count = getProblemCount($app->auth);
-	$problem_ids = Problem::selectProblemIds($grade, $cid, $count - count($failure));
+	$problem_ids = Problem::selectProblemIds($grade, $cid, $count - count($failure), $start);
 	$problem_ids = !empty($problem_ids) ? $problem_ids : array();
 	$problem_ids = array_slice(array_merge($failure, $problem_ids), 0, $count);
 	
@@ -96,4 +101,27 @@ function fail($info)
     return json_encode($response);
 }
 
+function nextExpiration_($today, $months)
+{
+	$nexttime = strtotime('last day of +'.$months.' month '.$today);
+	$todaytime = strtotime($today);
+	if (date('t', $todaytime) > date('j', $todaytime)) {
+		$back = date('j',$nexttime) - date('j',$todaytime);
+		if ($back > 0) {
+			$nexttime = strtotime('-'. $back.' days '.date('Y-m-d', $nexttime));
+		}
+	}
+	return date('Y-m-d', $nexttime);
+}
 
+// compute next expiration day in next month
+function nextExpirationMonth($today)
+{
+	return nextExpiration_($today, 1);
+}
+
+// compute next expiration day in next year
+function nextExpirationYear($today)
+{
+	return nextExpiration_($today, 12);
+}

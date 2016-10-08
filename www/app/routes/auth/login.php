@@ -30,7 +30,7 @@ $app->post('/login', $guest(), function() use($app) {
             })
             ->first();
         
-        if ($user && $app->hash->passwordCheck($password, $user->password)) {
+        if ($user && $app->hash->passwordCheck($password.'+'.$user->salt, $user->password)) {
             $_SESSION[$app->config->get('auth.session')] = $user->id;
             
             if ($remember == 'on') {

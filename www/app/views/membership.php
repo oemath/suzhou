@@ -9,4 +9,11 @@ $(function(){
 });
 </script>
 Membership
+<form class="oemathclass-faform form-group" style="width:90%" action="{{ urlFor('membership.post') }}" method="post" autocomplete="off">
+	<div>
+		<input type="submit" class="btn btn-success" value="Extend one month">
+	</div>
+
+	<input type="hidden" name="{{ csrf_key }}" value="{{ csrf_token }}">
+</form>
 {% endblock %}

@@ -22,9 +22,9 @@ $app->post('/api/problem', function() use ($app) {
     $app->log->info("/api/problem?g=".$grade."&c=".$cid."&i=".$index);
     $problem_ids = getProblemIds($app, $grade, $cid);
     if (null === $problem_ids) {
-    	$app->log->info("##api/problem".$app->token);
     	setSessionVar($app, 'index', $index);
     	$problem_ids = initProblemIds($app, $grade, $cid);
+    	setSessionVar($app, 'practice_problem_ids', $problem_ids);
     }
     
     if (null === $problem_ids) {
@@ -47,12 +47,14 @@ $app->post('/api/problem', function() use ($app) {
 	$problem = Problem::select($grade, $cid, $pid);
 	
 	if (null === $problem) {
-		for ($i=0; $i<count($problem); $i++) {
+		for ($i=0; $i<count($problem_ids); $i++) {
+			if ($i == $index) continue;
 			$pid = $problem_ids[$i];
 			$problem = Problem::select($grade, $cid, $pid);
 			if ($problem) {
     			$app->log->warn("/api/problem?g=".$grade."&c=".$cid."&i=".$index.'('.$i.') pid='.$pid);
     			$problem_ids[$index] = $pid; // replace the pid.
+    			setSessionVar($app, 'practice_problem_ids', $problem_ids);
 				break;
 			}
 		}
@@ -62,7 +64,8 @@ $app->post('/api/problem', function() use ($app) {
 		// if still cannot find a valid pid, the failure history must be wrong, 
 		// clean it up and retrieve pid list again.
 		cleanupFailure($app, $grade, $cid);
-		initProblemIds($app, $grade, $cid);
+		$problem_ids = initProblemIds($app, $grade, $cid);
+    	setSessionVar($app, 'practice_problem_ids', $problem_ids);
 		$pid = $problem_ids[$index]; // $index must be 0
 		$problem = Problem::select($grade, $cid, $pid);
 	}

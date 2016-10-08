@@ -58,8 +58,10 @@ $app->post('/password-reset', $guest(), function() use ($app) {
     ]);
     
     if ($v->passes()) {
+    	$salt = $app->randomlib->generateString(32);
         $user->update([
-                'password' => $app->hash->password($password),
+                'password' => $app->hash->password($password.'+'.$salt),
+        		'salt' => $salt,
                 'recover_hash' => null
         ]);
         

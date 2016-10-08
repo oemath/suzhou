@@ -77,14 +77,14 @@ class Practice {
                 };
             })(this),
             error: function (jqXHR, textStatus, errorThrown) {
-                $('#oemathid-dialog-nextproblem-error').show();
+                (<any>$('#oemathid-dialog-nextproblem-error')).modal({ "backdrop": "true" });
                 //$('#oemathid-dialog-congrat').show();
                 if (cbTimeout) {
                     cbTimeout();
                 }
                 // fired when timeout
             },
-            timeout: 1000 // set timeout to 30 seconds.
+            timeout: 18000 // set timeout to 18 seconds.
         });
 
 /*        if (problem) {
