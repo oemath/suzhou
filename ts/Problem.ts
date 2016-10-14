@@ -912,7 +912,7 @@ ${this.generateHint(mul_hints[0], 0)}</div>`;
 //        $("#xxxtestxxx").text("Hello, world!!");
     }
 
-    private postprocess(): void {
+    private preprocess(): void {
         let question: string = this.question;
         let parameter: string = this.parameter;
         let hint: string = this.hint;
@@ -942,6 +942,8 @@ ${this.generateHint(mul_hints[0], 0)}</div>`;
 
     public process(): boolean {
 
+        this.preprocess(); // replace abbr. like <.bb> in question, parameter and hint.
+
         this.parseParameterMap();
 //        this.parameter = this.replaceKnownParameters(this.parameter);
 //        this.parameter = this.replaceOemathTags(this.parameter);
@@ -954,8 +956,6 @@ ${this.generateHint(mul_hints[0], 0)}</div>`;
         this.hint = this.replaceKnownParameters(this.hint);
         this.hint = this.replaceEval(this.hint);
         this.hint = this.replaceOemathTags(this.hint);
-
-        this.postprocess(); // replace abbr. like <.bb> in question, parameter and hint.
 
         this.generateHtmls();
 

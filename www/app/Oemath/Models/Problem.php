@@ -20,7 +20,7 @@ class Problem
         
         try {
             $problems = DB::select(
-                    "select type, level, flag, question, parameter, knowledge, hint, flag
+                    "select type, level, flag, question, parameter, knowledge, hint
                      from g{$grade}c{$category}
                      where id = {$pid}");
             

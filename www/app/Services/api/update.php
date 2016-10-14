@@ -10,7 +10,7 @@ $app->get('/insert/category', function() use ($app) {
     $json = array();
     
     $grade = $_REQUEST['grade'];
-    if (!$grade) {
+    if (null===$grade) {
         echo fail("Invalid request");
     }
     else {
@@ -25,7 +25,7 @@ $app->get('/insert/pids', function() use ($app) {
 
     $grade = $_REQUEST['grade'];
     $category = $_REQUEST['category'];
-    if (!$grade || !$category) {
+    if (null === $grade || null===$category) {
         echo fail("Invalid request: grade=".$grade."; category=".$category);
     }
     else {
@@ -51,7 +51,20 @@ $app->get('/insert/getproblem', function() use ($app) {
         $query = "pid>=". $pid . " order by pid limit 1";
     }
     
-    $result = Problem::select($grade, $category, $pid);
+    $result = null;//Problem::select($grade, $category, $pid);
+    try {
+    	$result = DB::select(
+    			"select type, level, flag, question, parameter, knowledge, hint, cls
+    			from g0c0
+    			where id = {$pid}");
+    
+    	if ($result) {
+    		$result = $result[0];
+    	}
+    }
+    catch ( \Illuminate\Database\QueryException $e) {
+    }
+    
     
     if ($result != null && count($result) > 0) {
         $problem = $result;
@@ -70,6 +83,27 @@ $app->get('/insert/getproblem', function() use ($app) {
     }
     else {
         echo fail("Not found: grade=".$grade."; category=".$category."; pid=".pid);
+    }
+});
+
+$app->post('/insert/cls', function() use ($app) {
+    $grade = 0;
+    $category = 0;
+    $pid = $_REQUEST["pid"];
+    $cls = $_REQUEST['cls'];
+    if (null===$pid || null===$cls) {
+    	echo fail('Invalid request: pid='.$pid.'; cls='.$cls);
+    	return;
+    }
+    
+    try {
+        DB::table('g0c0')->where('id', $pid)->update([
+                'cls' => $cls,
+        ]);
+        echo ok("Success"); 
+    }
+    catch ( \Illuminate\Database\QueryException $e) {
+        echo fail("Failed to update cls for pid=".pid);
     }
 });
 

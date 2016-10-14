@@ -8,11 +8,9 @@ class User extends Eloquent
 {
     protected $table = 'users';
     
-    private static $MembershipBits = 0x02;
+    private static $MembershipBits = 0x01;
     private static $AdminBit = 0x80;
     
-    public static $MembershipNone = 0;
-    public static $MembershipValid = 1;
     
     protected $fillable = [
         'email',
@@ -72,19 +70,14 @@ class User extends Eloquent
         return (bool) ($this->flag & self::$AdminBit);
     }
 
-    public function membershipStatus()
+    public function isMembership()
     {
-    	return (int) $this->flag & self::$MembershipBits;
+    	return (bool) (($this->flag & self::$MembershipBits) == 1);
     }
     
-    public function membershipNone()
-    {
-    	return (bool) ($this->flag & self::$MembershipBits == self::$MembershipNone);
-    }
-
     public function membershipValid()
     {
-    	return (bool) (date('Y-m-d') <= $this->membership);
+    	return (bool) (($this->isMembership()) && (date('Y-m-d') <= $this->membership));
     }
     
     public function membershipExpirationDate()

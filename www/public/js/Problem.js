@@ -796,7 +796,7 @@ var Problem = (function () {
         }
         //        $("#xxxtestxxx").text("Hello, world!!");
     };
-    Problem.prototype.postprocess = function () {
+    Problem.prototype.preprocess = function () {
         var question = this.question;
         var parameter = this.parameter;
         var hint = this.hint;
@@ -823,6 +823,7 @@ var Problem = (function () {
         return str;
     };
     Problem.prototype.process = function () {
+        this.preprocess(); // replace abbr. like <.bb> in question, parameter and hint.
         this.parseParameterMap();
         //        this.parameter = this.replaceKnownParameters(this.parameter);
         //        this.parameter = this.replaceOemathTags(this.parameter);
@@ -833,7 +834,6 @@ var Problem = (function () {
         this.hint = this.replaceKnownParameters(this.hint);
         this.hint = this.replaceEval(this.hint);
         this.hint = this.replaceOemathTags(this.hint);
-        this.postprocess(); // replace abbr. like <.bb> in question, parameter and hint.
         this.generateHtmls();
         this.entered = new Array(this.inputCount);
         this.entered_wrong = null;

@@ -1,5 +1,6 @@
 <?php
 require INC_ROOT . '/app/routes/update.php';
+require INC_ROOT . '/app/routes/move.php';
 
 require INC_ROOT . '/app/routes/home.php';
 

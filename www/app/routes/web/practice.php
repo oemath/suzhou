@@ -17,14 +17,14 @@ $app->get('/practice', function() use ($app) {
     if (!$grade || !$cid/* || !$title*/) {
     	$app->log->error('/practice?g='.$grade.'&c='.$cid);
     	echo 'Invalid request';
-        return;// $app->render('web/practice.php');
+        return;
     }
 
     $category = $app->category->where([['grade','=',$grade],['cid','=',$cid]])->first();//Category::select($grade, $cid);
     if (!$category) {
     	$app->log->error('/practice?g='.$grade.'&c='.$cid.' invalid_cid');
     	echo 'Invalid category in practice: grade='.$grade.'cid='.$cid;
-    	return;// $app->render('web/practice.php');
+    	return;
     }
     $title = $category->title;
     
@@ -35,12 +35,26 @@ $app->get('/practice', function() use ($app) {
     $_SESSION[$session_token]['index'] = 0;
     $_SESSION[$session_token]['practice_problem_ids'] = $problem_ids;
     
+    $userType = 0; // guest
+    if ($app->auth) {
+    	if (!$app->auth->isMembership()) {
+    		$userType = 1; // not a membership
+    	}
+    	else if (!$app->auth->membershipValid()) {
+    		$userType = 2; // membership not valid or expired
+    	}
+    	else {
+    		$userType = 3; // a valid membership
+    	}
+    }
+
     $app->render('web/practice.php', [
             'grade' => $grade,
             'cid' => $cid,
             'title' => $title,
             'token' =>  $session_token,
             'count' => count($problem_ids),
+    		'userType' => $userType,
             'practice_css' => true
     ]);
 })->name('practice');
