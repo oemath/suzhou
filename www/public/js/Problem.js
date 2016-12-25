@@ -78,10 +78,20 @@ var Problem = (function () {
             'pi0': '  <b>Use &pi; as 3.14 and express your answer to the nearest integer.</b>',
             'pi1': '  <b>Use &pi; as 3.14 and express your answer to the nearest tenth.</b>',
             'pi2': '  <b>Use &pi; as 3.14 and express your answer to the nearest hundredth.</b>',
-            'mul': '  <b>This question has more than one correct answers, you only need to provide one of them.</b>',
+            'erf': 'Evaluate expression as a reduced fraction',
+            'mul': '  <b>This question has more than one correct answers, you can provide any one of them.</b>',
             'LCM': "<a class=\"oemathclass-tooltip\" data-toggle=\"tooltip\" data-html=\"true\" title=\"Least Common Multiple\">LCM</a>",
             'GCD': '<a class="oemathclass-tooltip" data-toggle="tooltip" data-html="true" title="Greatest Common Divisor, a.k.a GCF (Greatest Common Factor)">GCD</a>',
             'yard': '<a class="oemathclass-tooltip" data-toggle="tooltip" data-html="true" title="1 mile = 1760 yards.  1 yard = 0.000568182 miles">yard</a>',
+            'mile-yard': '<a class="oemathclass-tooltip" data-toggle="tooltip" data-html="true" title="1 mile = 63360 inches.">mile</a>',
+            'mile-inch': '<a class="oemathclass-tooltip" data-toggle="tooltip" data-html="true" title="1 mile = 63360 inches.">mile</a>',
+            'area': '  <b>Here S<sub>&#9651;ABC</sub> means the area of &#9651;ABC.</b>',
+            '~': '<span style="text-decoration: overline;">',
+            '-': '<span style="text-decoration: line-through;">',
+            '_': '<span style="text-decoration: underline;">',
+            'nowrap': '<span style="white-space:nowrap;">',
+            'table': '<table class="oemathclass-question-table">',
+            '': '</span>',
         };
         this.index = index;
         this.type = prob.type;
@@ -283,7 +293,12 @@ var Problem = (function () {
                 this.type == ProblemType.TrueFalse ||
                 this.type == ProblemType.Radio ||
                 this.type == ProblemType.Checkbox))) {
-                value = (value.indexOf('undefined') < 0) ? "" + this.eval(value) : 'undefined';
+                // support multiple possible answer, like 'ans=4;;20' means either 4 or 20 is a correct answer.
+                var vals = value.split(';;');
+                for (var i = 0; i < vals.length; i++) {
+                    vals[i] = (vals[i].indexOf('undefined') < 0) ? "" + this.eval(vals[i]) : 'undefined';
+                }
+                value = vals.join(';;');
             }
             this.value_map[("<" + name_1 + ">")] = value;
         }
@@ -627,15 +642,15 @@ var Problem = (function () {
             case ProblemType.InlineFunction:
                 {
                     var inputElems = $('#oemathid-practice-question input[index]');
-                    for (var i = 0; i < inputElems.length; i++) {
-                        var inputElem = inputElems[i];
-                        if (inputElem.style.visibility != 'hidden') {
-                            answer_entered = inputElem.value.trim();
-                            if (answer_entered.length == 0) {
-                                return Answer.Incomplete;
-                            }
-                        }
-                    }
+                    /*                for (let i: number = 0; i < inputElems.length; i++) {
+                                        let inputElem: HTMLInputElement = <HTMLInputElement>inputElems[i];
+                                        if (inputElem.style.visibility != 'hidden') {
+                                            answer_entered = inputElem.value.trim();
+                                            if (answer_entered.length == 0) {
+                                                return Answer.Incomplete;
+                                            }
+                                        }
+                                    }*/
                     if (this.type == ProblemType.Normal) {
                         answer_entered = $("#oemathid-answer-input-0").val().trim();
                         correct = this.evalLiteral("" + answer_entered, "" + this.value_map['<ans>']) ? true : false;
@@ -719,9 +734,14 @@ var Problem = (function () {
     Problem.prototype.generateHtmls = function () {
         this.htmlBase =
             "<div id=\"oemathid-question-html\"><hr/><div class=\"oemathclass-title\" style=\"height:60px;\"><span style=\"display:inline-block;float:left;color:green;\">Question</span>";
+        if (1 <= this.level && this.level <= 5) {
+            var diff_text = ['Easiest', 'Easy', 'Normal', 'Hard', 'Hardest'];
+            this.htmlBase +=
+                "<input type=\"image\" style=\"display:inline-block;float:right;outline:none;margin-right:10px;margin-top:5px;\" border=\"0\" title=\"" + diff_text[this.level - 1] + "\" alt=\"" + diff_text[this.level - 1] + "\" src=\"/img/page/difficult" + this.level + ".png\" height=\"15\">";
+        }
         if (this.hint) {
             this.htmlBase +=
-                "<input type=\"image\" data-toggle=\"modal\" data-target=\"#oemathid-hintsModal\" style=\"display:inline-block;float:right;outline:none\" border=\"0\" title=\"Need some hint?\" alt=\"hint\" src=\"/img/page/hint.png\" width=\"32\" height=\"32\">";
+                "<input type=\"image\" data-toggle=\"modal\" data-target=\"#oemathid-hintsModal\" style=\"display:inline-block;float:right;outline:none;margin-right:15px\" border=\"0\" title=\"Need some hint?\" alt=\"hint\" src=\"/img/page/hint.png\" width=\"32\" height=\"32\">";
         }
         this.htmlBase +=
             "</div><div id=\"oemathid-practice-question\" class=\"oemathclass-practice-question " + (this.flag == 1 ? "oemathclass-mathjax" : "") + "\">" + this.question + "</div><div class=\"form-inline\" style=\"width:100%\">";
@@ -802,14 +822,15 @@ var Problem = (function () {
         var hint = this.hint;
         // replace reservered keyword <.xxx> in question and hint
         $.each(this.abbrs, function (k, v) {
+            var pattern = new RegExp("<\\." + k + ">", "g");
             if (question != null) {
-                question = question.replace(new RegExp("<." + k + ">", "g"), v);
+                question = question.replace(pattern, v);
             }
             if (parameter != null) {
-                parameter = parameter.replace(new RegExp("<." + k + ">", "g"), v);
+                parameter = parameter.replace(pattern, v);
             }
             if (hint != null) {
-                hint = hint.replace(new RegExp("<." + k + ">", "g"), v);
+                hint = hint.replace(pattern, v);
             }
         });
         this.question = question;

@@ -34,11 +34,6 @@ var oe;
         return a;
     }
     oe.shuffle = shuffle;
-    function shuffle2(a) {
-        shuffle(a, a.length);
-        return a;
-    }
-    oe.shuffle2 = shuffle2;
     function choose(a, n) {
         if (n < 0 || n >= a.length)
             return '[]';
@@ -268,6 +263,61 @@ var oe;
         return Tstr(a).toLowerCase();
     }
     oe.tstr = tstr;
+    // ones digit
+    function d1(a) {
+        if (a == undefined || isNaN(a))
+            return a;
+        return a % 10;
+    }
+    oe.d1 = d1;
+    function d2(a) {
+        if (a == undefined || isNaN(a))
+            return a;
+        return Math.floor(a / 10) % 10;
+    }
+    oe.d2 = d2;
+    function d3(a) {
+        if (a == undefined || isNaN(a))
+            return a;
+        return Math.floor(a / 100) % 10;
+    }
+    oe.d3 = d3;
+    function d4(a) {
+        if (a == undefined || isNaN(a))
+            return a;
+        return Math.floor(a / 1000) % 10;
+    }
+    oe.d4 = d4;
+    function d5(a) {
+        if (a == undefined || isNaN(a))
+            return a;
+        return Math.floor(a / 10000) % 10;
+    }
+    oe.d5 = d5;
+    function d6(a) {
+        if (a == undefined || isNaN(a))
+            return a;
+        return Math.floor(a / 100000) % 10;
+    }
+    oe.d6 = d6;
+    function d7(a) {
+        if (a == undefined || isNaN(a))
+            return a;
+        return Math.floor(a / 1000000) % 10;
+    }
+    oe.d7 = d7;
+    function d8(a) {
+        if (a == undefined || isNaN(a))
+            return a;
+        return Math.floor(a / 10000000) % 10;
+    }
+    oe.d8 = d8;
+    function d9(a) {
+        if (a == undefined || isNaN(a))
+            return a;
+        return Math.floor(a / 100000000) % 10;
+    }
+    oe.d9 = d9;
     function ngon(a) {
         if (a >= 3 && a <= 10)
             return ['triangle', 'quadrilateral', 'pentagon', 'hexagon', 'heptagon', 'octagon', 'nanogon', 'decagon'][a - 3];
@@ -590,6 +640,25 @@ var oe;
         return r.sort(function (a, b) { return a - b; });
     }
     oe.coin = coin;
+    // how many different ways to give different <books> books to <ppl> people
+    // ppl <= books <= 6
+    // dynamic programming
+    function waysGiveBooks(ppl, books) {
+        if (ppl == undefined || books == undefined || isNaN(ppl) || isNaN(books))
+            return NaN;
+        if (books > 6 || ppl > books)
+            return 0;
+        var ar = [
+            [1, 1, 1, 1, 1, 1],
+            [0, 2, 6, 14, 30, 62],
+            [0, 0, 6, 36, 150, 540],
+            [0, 0, 0, 24, 240, 1560],
+            [0, 0, 0, 0, 120, 1800],
+            [0, 0, 0, 0, 0, 720]
+        ];
+        return ar[ppl - 1][books - 1];
+    }
+    oe.waysGiveBooks = waysGiveBooks;
     // y = ax + b
     function formulaLine(a, b) {
         if (a == undefined || b == undefined || isNaN(a) || isNaN(b))
@@ -777,6 +846,385 @@ var oe;
         return x.slice(0, x.length - 1).join(", ") + ", and " + x[x.length - 1];
     }
     oe.join = join;
+    function p2cx(x, y, r, degree) {
+        if (x == undefined || y == undefined || degree == undefined)
+            return undefined;
+        if (isNaN(x) || isNaN(y) || isNaN(degree))
+            return undefined;
+        return x + r * Math.cos(degree * Math.PI / 180);
+    }
+    oe.p2cx = p2cx;
+    function p2cy(x, y, r, degree) {
+        if (x == undefined || y == undefined || degree == undefined)
+            return undefined;
+        if (isNaN(x) || isNaN(y) || isNaN(degree))
+            return undefined;
+        return y + r * Math.sin(degree * Math.PI / 180);
+    }
+    oe.p2cy = p2cy;
+    function arrow_arc(ctx, x, y, r, start, degree, ar) {
+        if (ctx == undefined || x == undefined || y == undefined || r == undefined || start == undefined || degree == undefined)
+            return;
+        if (isNaN(x) || isNaN(y) || isNaN(r) || isNaN(start) || isNaN(degree))
+            return;
+        var ccw = degree <= 0 ? true : false;
+        if (ccw == undefined)
+            ccw = false;
+        if (ar == undefined)
+            ar = 5;
+        var alpha = start + degree;
+        var beta = ccw ? (45 + alpha) : 180 + 45 + alpha;
+        ctx.moveTo(p2cx(x, y, r, start), p2cy(x, y, r, start));
+        ctx.arc(x, y, r, start * Math.PI / 180, alpha * Math.PI / 180, ccw);
+        x = p2cx(x, y, r, alpha);
+        y = p2cy(x, y, r, alpha);
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + ar * Math.cos(beta * Math.PI / 180), y + ar * Math.sin(beta * Math.PI / 180));
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + ar * Math.cos((90 + beta) * Math.PI / 180), y + ar * Math.sin((90 + beta) * Math.PI / 180));
+    }
+    oe.arrow_arc = arrow_arc;
+    function arrow_h(ctx, x, y, len, ar) {
+        if (ctx == undefined || x == undefined || y == undefined || len == undefined)
+            return;
+        if (isNaN(x) || isNaN(y) || isNaN(len))
+            return;
+        if (ar == undefined)
+            ar = 5;
+        ctx.moveTo(x, y);
+        x += len;
+        ctx.lineTo(x, y);
+        if (len > 0) {
+            ctx.lineTo(x - ar, y - ar);
+            ctx.moveTo(x, y);
+            ctx.lineTo(x - ar, y + ar);
+        }
+        else {
+            ctx.lineTo(x + ar, y - ar);
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + ar, y + ar);
+        }
+    }
+    oe.arrow_h = arrow_h;
+    function arrow_v(ctx, x, y, len, ar) {
+        if (ctx == undefined || x == undefined || y == undefined || len == undefined)
+            return;
+        if (isNaN(x) || isNaN(y) || isNaN(len))
+            return;
+        if (ar == undefined)
+            ar = 5;
+        ctx.moveTo(x, y);
+        y += len;
+        ctx.lineTo(x, y);
+        if (len > 0) {
+            ctx.lineTo(x - ar, y - ar);
+            ctx.moveTo(x, y + len);
+            ctx.lineTo(x + ar, y - ar);
+        }
+        else {
+            ctx.lineTo(x - ar, y + ar);
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + ar, y + ar);
+        }
+    }
+    oe.arrow_v = arrow_v;
+    function arc_bar(ctx, x, y, r, d, len) {
+        if (ctx == undefined || x == undefined || y == undefined || r == undefined || d == undefined)
+            return;
+        if (isNaN(x) || isNaN(y) || isNaN(r) || isNaN(d))
+            return;
+        if (len == undefined || isNaN(len))
+            len = 2;
+        ctx.moveTo(oe.p2cx(x, y, r - len, d), oe.p2cy(x, y, r - len, d));
+        ctx.lineTo(oe.p2cx(x, y, r + len, d), oe.p2cy(x, y, r + len, d));
+    }
+    oe.arc_bar = arc_bar;
+    function right_angle(ctx, x, y, ang, len) {
+        if (ctx == undefined || x == undefined || y == undefined || ang == undefined)
+            return;
+        if (isNaN(x) || isNaN(y) || isNaN(ang))
+            return;
+        if (len == undefined || isNaN(len))
+            len = 8;
+        var d = ang;
+        ctx.moveTo(oe.p2cx(x, y, len, d), oe.p2cy(x, y, len, d));
+        ctx.lineTo(oe.p2cx(x, y, len * Math.sqrt(2), d + 45), oe.p2cy(x, y, len * Math.sqrt(2), d + 45));
+        ctx.lineTo(oe.p2cx(x, y, len, d + 90), oe.p2cy(x, y, len, d + 90));
+    }
+    oe.right_angle = right_angle;
+    function arc(ctx, x, y, r, s, e, c) {
+        if (ctx == undefined || x == undefined || y == undefined || r == undefined || s == undefined || e == undefined)
+            return;
+        if (isNaN(x) || isNaN(y) || isNaN(r) || isNaN(s) || isNaN(e))
+            return;
+        if (c == undefined)
+            c = false;
+        ctx.arc(x, y, r, s * Math.PI / 180, e * Math.PI / 180, c);
+    }
+    oe.arc = arc;
+    function circle(ctx, x, y, r, c) {
+        if (ctx == undefined || x == undefined || y == undefined || r == undefined)
+            return;
+        if (isNaN(x) || isNaN(y) || isNaN(r))
+            return;
+        if (c == undefined)
+            c = false; // bu default, don't draw center point
+        if (c) {
+            ctx.moveTo(x, y);
+            ctx.arc(x, y, 1, 0, 2 * Math.PI);
+            ctx.moveTo(x + r, y);
+        }
+        ctx.arc(x, y, r, 0, 2 * Math.PI);
+    }
+    oe.circle = circle;
+    // paint a mark on a line
+    function mark(ctx, x1, y1, x2, y2, n, len, gap) {
+        if (ctx == undefined || x1 == undefined || y1 == undefined || x2 == undefined || y2 == undefined)
+            return;
+        if (isNaN(x1) || isNaN(y1) || isNaN(x2) || isNaN(y2))
+            return;
+        if (n == undefined || isNaN(n))
+            n = 1;
+        if (len == undefined || isNaN(len))
+            len = 6;
+        if (gap == undefined || isNaN(gap))
+            gap = 5;
+        var dx = x2 - x1;
+        var dy = y2 - y1;
+        var p = Math.sqrt(dx * dx + dy * dy);
+        var rx = dx / p;
+        var ry = dy / p;
+        var x = (x1 + x2) / 2 - (n - 1) * gap * rx / 2;
+        var y = (y1 + y2) / 2 - (n - 1) * gap * ry / 2;
+        for (var i = 0; i < n; i++) {
+            ctx.moveTo(x - ry * len, y + rx * len);
+            ctx.lineTo(x + ry * len, y - rx * len);
+            x += gap * rx;
+            y += gap * ry;
+        }
+    }
+    oe.mark = mark;
+    // paint a mark on an arc
+    function mark_arc(ctx, x, y, r, s, e, n, len, gap) {
+        if (ctx == undefined || x == undefined || y == undefined || r == undefined || s == undefined || e == undefined)
+            return;
+        if (isNaN(x) || isNaN(y) || isNaN(r) || isNaN(s) || isNaN(e))
+            return;
+        if (n == undefined || isNaN(n))
+            n = 1;
+        if (len == undefined || isNaN(len))
+            len = 6;
+        if (gap == undefined || isNaN(gap))
+            gap = 3;
+        var d = (s + e) / 2 - (n - 1) * gap / 2;
+        for (var i = 0; i < n; i++) {
+            arc_bar(ctx, x, y, r, d, len);
+            d += gap;
+        }
+    }
+    oe.mark_arc = mark_arc;
+    /////////////////////////
+    // three.js
+    /////////////////////////
+    function material(op) {
+        if (op == undefined || op == 1) {
+            return new THREE.MeshNormalMaterial({ side: THREE.DoubleSide });
+        }
+        else {
+            return new THREE.MeshNormalMaterial({ transparent: true, opacity: op, side: THREE.DoubleSide });
+        }
+    }
+    oe.material = material;
+    function sphere(x, y, z, r, op) {
+        var geometry = new THREE.SphereGeometry(r, 50, 50);
+        var cube = new THREE.Mesh(geometry, material(op));
+        cube.position.x = x;
+        cube.position.y = y;
+        cube.position.z = z;
+        return cube;
+    }
+    oe.sphere = sphere;
+    function cube2(x, y, z, d1, d2, d3, op) {
+        var geometry = new THREE.BoxGeometry(d1, d2, d3);
+        var cube = new THREE.Mesh(geometry, material(op));
+        cube.position.x = x + d1 / 2;
+        cube.position.y = y + d2 / 2;
+        cube.position.z = z + d3 / 2;
+        return cube;
+    }
+    oe.cube2 = cube2;
+    function cube(x, y, z, d, op) {
+        return oe.cube2(x, y, z, d, d, d, op);
+    }
+    oe.cube = cube;
+    function colorCube2(x, y, z, d1, d2, d3, clr, op) {
+        var geometry = new THREE.BoxGeometry(d1, d2, d3);
+        for (var i = 0; i < geometry.faces.length; i += 2) {
+            geometry.faces[i].color.setHex(clr);
+            geometry.faces[i + 1].color.setHex(clr);
+        }
+        if (op == undefined || op == 1) {
+            var material = new THREE.MeshBasicMaterial({
+                vertexColors: THREE.FaceColors,
+                overdraw: 0.5,
+                side: THREE.DoubleSide
+            });
+        }
+        else {
+            var material = new THREE.MeshBasicMaterial({
+                transparent: true,
+                opacity: op,
+                vertexColors: THREE.FaceColors,
+                overdraw: 0.5,
+                side: THREE.DoubleSide
+            });
+        }
+        var cube = new THREE.Mesh(geometry, material);
+        cube.position.x = x + d1 / 2;
+        cube.position.y = y + d2 / 2;
+        cube.position.z = z + d3 / 2;
+        return cube;
+    }
+    oe.colorCube2 = colorCube2;
+    function colorCube(x, y, z, d, clr, op) {
+        return oe.colorCube2(x, y, z, d, d, d, clr, op);
+    }
+    oe.colorCube = colorCube;
+    function rgbCube2(x, y, z, d1, d2, d3, clr, op) {
+        var geometry = new THREE.BoxGeometry(d1, d2, d3);
+        var xx = '';
+        for (var i = 0; i < geometry.faces.length; i += 2) {
+            var color = 0xffffff;
+            xx += '' + i + '=' + clr[(i / 2) % clr.length] + ',';
+            switch (clr[(i / 2) % clr.length]) {
+                case 'r':
+                    color = 0xff0000;
+                    break;
+                case 'g':
+                    color = 0x00ff00;
+                    break;
+                case 'b':
+                    color = 0x0000ff;
+                    break;
+                case 'y':
+                    color = 0xffff00;
+                    break;
+                case 'p':
+                    color = 0x00ffff;
+                    break;
+                case 'B':
+                    color = 0x000000;
+                    break;
+                case 'W':
+                    color = 0xffffff;
+                    break;
+                case 'G':
+                    color = 0x7f7f7f;
+                    break;
+            }
+            geometry.faces[i].color.setHex(color);
+            geometry.faces[i + 1].color.setHex(color);
+            $('#info').text(xx);
+        }
+        if (op == undefined || op == 1) {
+            var material = new THREE.MeshBasicMaterial({
+                vertexColors: THREE.FaceColors,
+                overdraw: 0.5,
+                side: THREE.DoubleSide
+            });
+        }
+        else {
+            var material = new THREE.MeshBasicMaterial({
+                transparent: true,
+                opacity: op,
+                vertexColors: THREE.FaceColors,
+                overdraw: 0.5,
+                side: THREE.DoubleSide
+            });
+        }
+        var cube = new THREE.Mesh(geometry, material);
+        cube.position.x = x + d1 / 2;
+        cube.position.y = y + d2 / 2;
+        cube.position.z = z + d3 / 2;
+        return cube;
+    }
+    oe.rgbCube2 = rgbCube2;
+    function rgbCube(x, y, z, d, clr, op) {
+        return oe.rgbCube2(x, y, z, d, d, d, clr, op);
+    }
+    oe.rgbCube = rgbCube;
+    function cone(x, y, z, r, h, op) {
+        var geometry = new THREE.ConeGeometry(r, h, 50, 50);
+        var cone = new THREE.Mesh(geometry, oe.material(op));
+        cone.position.x = x;
+        cone.position.y = y + h / 2;
+        cone.position.z = z;
+        return cone;
+    }
+    oe.cone = cone;
+    function cylinder(x, y, z, r1, r2, h, op, open) {
+        if (open == undefined)
+            open = false;
+        var geometry = new THREE.CylinderGeometry(r1, r2, h, 50, 50, open);
+        var cone = new THREE.Mesh(geometry, oe.material(op));
+        cone.position.x = x;
+        cone.position.y = y + h / 2;
+        cone.position.z = z;
+        return cone;
+    }
+    oe.cylinder = cylinder;
+    function polyCylinder(x, y, z, n, r1, r2, h, op) {
+        var geometry = new THREE.CylinderGeometry(r1, r2, h, n, 50);
+        var cone = new THREE.Mesh(geometry, oe.material(op));
+        cone.position.x = x;
+        cone.position.y = y + h / 2;
+        cone.position.z = z;
+        return cone;
+    }
+    oe.polyCylinder = polyCylinder;
+    function animate(renderer, scene, camera, controls, tball) {
+        //        setTimeout(function () {
+        requestAnimationFrame(function () { animate(renderer, scene, camera, controls, tball); });
+        //      }, 1000 / 20);
+        controls.update();
+        tball.update();
+        renderer.render(scene, camera);
+        /*        controls.update();
+                tball.update();
+                renderer.render(scene, camera);
+                setTimeout(function () {
+                    animate(renderer, scene, camera, controls, tball);
+                }, 1000 / 15);*/
+    }
+    oe.animate = animate;
+    function three(container, callback) {
+        var scene = new THREE.Scene();
+        var camera = new THREE.PerspectiveCamera(45, container.width() / container.height(), 1, 1000);
+        camera.position.x = 250;
+        camera.position.y = 150;
+        camera.position.z = 200;
+        camera.lookAt(new THREE.Vector3(0, 0, 0));
+        scene.add(camera);
+        var renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setClearColor(0xffffff);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(container.width(), container.height());
+        //				renderer.shadowMapCullFace = THREE.CullFaceBack;
+        container.append(renderer.domElement);
+        if (callback(scene, camera)) {
+            // animate
+            var tball = new THREE.TrackballControls(camera, renderer.domElement);
+            var controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.5;
+            controls.enableZoom = false;
+            animate(renderer, scene, camera, controls, tball);
+        }
+        else {
+            renderer.render(scene, camera);
+        }
+    }
+    oe.three = three;
 })(oe || (oe = {}));
 ;
 //# sourceMappingURL=Utility.js.map

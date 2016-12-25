@@ -20,13 +20,14 @@
 
 #oemathid-practice-question{
 	min-height: 300px;
-	font-family: Verdana, Geneva, sans-serif;
+//	font-family: Verdana, Geneva, sans-serif;
 //	font-family: "Century Gothic", CenturyGothic, AppleGothic, sans-serif;
+	font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
 	font-size: 20px;
     padding-left: 15px;
     padding-right: 15px;
     line-height: 150%;
-    text-align: justify;
+//    text-align: justify;
 }
 
 .oemathclass-mathjax{
@@ -47,8 +48,9 @@
 }
 
 .oemathclass-question-choice-label{
-    font-size: 24px;
+    font-size: 20px;
     font-weight: normal;
+    font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
 }
 
 .oemathclass-question-form input[type=radio], .oemathclass-question-form input[type=checkbox] {
@@ -58,6 +60,10 @@
     height: 20px;
 }
 
+.oemathclass-question-table td {
+	padding-bottom: 5px;
+	font-size: 20px;
+}
 
 #oemathid-hintmodal{
 	width: 700px;

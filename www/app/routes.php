@@ -1,6 +1,5 @@
 <?php
-require INC_ROOT . '/app/routes/update.php';
-require INC_ROOT . '/app/routes/move.php';
+require INC_ROOT . '/app/routes/admin/admin.php';
 
 require INC_ROOT . '/app/routes/home.php';
 
@@ -10,8 +9,6 @@ require INC_ROOT . '/app/routes/auth/activate.php';
 require INC_ROOT . '/app/routes/auth/logout.php';
 
 require INC_ROOT . '/app/routes/user/profile.php';
-
-require INC_ROOT . '/app/routes/admin/example.php';
 
 require INC_ROOT . '/app/routes/account/profile.php';
 
